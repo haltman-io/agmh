@@ -12,6 +12,7 @@ include sources.example.txt
 include destinations.example.txt
 include .release-please-manifest.json
 include release-please-config.json
+include .github/CODEOWNERS
 recursive-include .github *.md *.yml
 recursive-include src *.typed
 recursive-include tests *.py

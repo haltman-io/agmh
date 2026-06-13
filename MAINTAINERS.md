@@ -8,6 +8,10 @@
 
 - https://github.com/haltman-io/agmh
 
+## Package
+
+- https://pypi.org/project/agmh/
+
 ## Security Contact
 
 - root@haltman.io
@@ -20,3 +24,5 @@
 - Keep release notes in `CHANGELOG.md`.
 - Keep `RELEASING.md` and GitHub Actions publishing workflows aligned with PyPI
   Trusted Publishing settings.
+- Keep PyPI project links in `pyproject.toml` aligned with public repository
+  files and support paths.

@@ -7,6 +7,7 @@ Use these paths depending on the type of request.
 Open a public issue for ordinary bugs. Include:
 
 - AGMH version or commit.
+- Installation source: PyPI package, source checkout, or another package index.
 - Python version and operating system.
 - Command used.
 - Sanitized config snippet.
@@ -24,3 +25,7 @@ follow `SECURITY.md`.
 Prefer opening a discussion or issue with a minimal example. Remove secrets from
 all pasted configs, logs, URLs, and command output.
 
+Project links:
+
+- PyPI: https://pypi.org/project/agmh/
+- Repository: https://github.com/haltman-io/agmh

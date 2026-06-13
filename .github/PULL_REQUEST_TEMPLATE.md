@@ -6,6 +6,8 @@
 
 - [ ] `python -m compileall -q src tests`
 - [ ] `PYTHONPATH=src python -m unittest discover -s tests -v`
+- [ ] `python -m build`
+- [ ] `python -m twine check --strict dist/*`
 - [ ] `python -m pip install -e . --dry-run --no-deps`
 
 ## Checklist
@@ -19,4 +21,3 @@
 
 Do not include private vulnerability details in this pull request. Follow
 `SECURITY.md` instead.
-

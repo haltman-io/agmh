@@ -4,6 +4,10 @@ AGMH uses Release Please for release PRs, version bumps, changelog generation,
 Git tags, and GitHub Releases. PyPI publishing is handled by GitHub Actions
 using PyPI Trusted Publishing.
 
+PyPI project:
+
+- https://pypi.org/project/agmh/
+
 ## Release Flow
 
 1. Merge ordinary work into `main` using Conventional Commit messages.
@@ -50,7 +54,7 @@ Release-As: 0.2.0
 
 ## PyPI Trusted Publishing
 
-Configure a PyPI trusted publisher for the `agmh` project:
+The `agmh` PyPI project is published by this trusted publisher:
 
 - Owner: `haltman-io`
 - Repository: `agmh`
@@ -61,10 +65,10 @@ No PyPI API token is required when Trusted Publishing is configured. The
 workflow requests an OpenID Connect token through GitHub Actions and PyPI
 validates the repository, workflow, and environment.
 
-`publish-pypi.yml` exists as a manual fallback for maintainers. If you want to
-use that fallback, register it as an additional trusted publisher with workflow
-filename `publish-pypi.yml` and the same owner, repository, and `pypi`
-environment.
+`publish-pypi.yml` exists as a manual fallback for maintainers. It is not used
+by the default automatic release path. If you want to use that fallback,
+register it as an additional trusted publisher with workflow filename
+`publish-pypi.yml` and the same owner, repository, and `pypi` environment.
 
 ## TestPyPI Trusted Publishing
 

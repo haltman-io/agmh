@@ -30,7 +30,10 @@ dependencies = []
 [project.urls]
 Homepage = "https://github.com/haltman-io/agmh"
 Repository = "https://github.com/haltman-io/agmh"
+PyPI = "https://pypi.org/project/agmh/"
 Issues = "https://github.com/haltman-io/agmh/issues"
+Changelog = "https://github.com/haltman-io/agmh/blob/main/CHANGELOG.md"
+Security = "https://github.com/haltman-io/agmh/blob/main/SECURITY.md"
 
 [project.optional-dependencies]
 tui = ["rich>=13.7"]

@@ -1,12 +1,17 @@
 # AGMH
 
-![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11%2B-3776ab.svg)
+[![PyPI](https://img.shields.io/pypi/v/agmh.svg)](https://pypi.org/project/agmh/)
+[![Python](https://img.shields.io/pypi/pyversions/agmh.svg)](https://pypi.org/project/agmh/)
+[![CI](https://github.com/haltman-io/agmh/actions/workflows/ci.yml/badge.svg)](https://github.com/haltman-io/agmh/actions/workflows/ci.yml)
+[![Release](https://github.com/haltman-io/agmh/actions/workflows/release-please.yml/badge.svg)](https://github.com/haltman-io/agmh/actions/workflows/release-please.yml)
+[![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)](LICENSE)
 ![CLI](https://img.shields.io/badge/interface-CLI%20%2B%20TUI-111111.svg)
 ![Sources](https://img.shields.io/badge/sources-GitHub%20%7C%20GitLab%20%7C%20Forgejo%20%7C%20Bitbucket%20%7C%20SourceHut-111111.svg)
 ![Destinations](https://img.shields.io/badge/destinations-GitHub%20%7C%20GitLab%20%7C%20Forgejo%20%7C%20Bitbucket%20%7C%20SourceHut-111111.svg)
 
 AGMH means **ANTI GITHUB & MICROSOFT HYSTERIA**.
+
+Package: [agmh on PyPI](https://pypi.org/project/agmh/)
 
 Repository: [haltman-io/agmh](https://github.com/haltman-io/agmh)
 
@@ -123,25 +128,11 @@ Notes:
 
 ## Installation
 
-Clone the repository:
+Install from PyPI:
 
 ```bash
-git clone https://github.com/haltman-io/agmh.git
-cd agmh
-```
-
-Create a virtual environment:
-
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-```
-
-Install AGMH in editable mode:
-
-```bash
-python -m pip install -U pip
-python -m pip install -e ".[tui]"
+python3 -m pip install -U pip
+python3 -m pip install "agmh[tui]"
 ```
 
 Check the CLI:
@@ -149,6 +140,24 @@ Check the CLI:
 ```bash
 agmh --help
 agmh run --help
+```
+
+For an isolated install on Ubuntu, use a virtual environment:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -U pip
+python -m pip install "agmh[tui]"
+```
+
+For development, clone the repository and install it in editable mode:
+
+```bash
+git clone https://github.com/haltman-io/agmh.git
+cd agmh
+python -m pip install -U pip
+python -m pip install -e ".[tui,dev]"
 ```
 
 If you do not install the package, you can run it with `PYTHONPATH`:
@@ -162,21 +171,26 @@ PYTHONPATH=src python3 -m anti_gh_ms_hysteria run --help
 Create a starter config:
 
 ```bash
-cp config.example.toml agmh.config.toml
+agmh init-config --path agmh.config.toml
 ```
 
-Create `sources.txt` from the public-safe example:
+Create `sources.txt` with one source profile, organization, group, namespace,
+or workspace URL per line:
 
 ```bash
-cp sources.example.txt sources.txt
+cat > sources.txt <<'EOF'
+https://github.com/haltman-io/
+EOF
 $EDITOR sources.txt
 ```
 
 If you prefer to keep destinations in a separate file instead of inline TOML,
-start from the destination example:
+create `destinations.txt`:
 
 ```bash
-cp destinations.example.txt destinations.txt
+cat > destinations.txt <<'EOF'
+https://gitlab.com/haltman-io
+EOF
 $EDITOR destinations.txt
 ```
 
@@ -1502,9 +1516,12 @@ Haltman.IO links:
 - [SUPPORT.md](SUPPORT.md): support paths for bugs, questions, and security reports.
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): collaboration expectations.
 - [MAINTAINERS.md](MAINTAINERS.md): maintainer and security contact information.
+- [.github/CODEOWNERS](.github/CODEOWNERS): default review ownership.
 
 ## References
 
+- AGMH on PyPI: https://pypi.org/project/agmh/
+- AGMH repository: https://github.com/haltman-io/agmh
 - Unlicense: https://unlicense.org/
 - GitHub personal access tokens: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
 - GitHub repositories REST API: https://docs.github.com/en/rest/repos/repos
