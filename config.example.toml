@@ -1,4 +1,5 @@
 workspace = ".aghm"
+mode = "full"
 dry_run = false
 verbose = 0
 tui = true

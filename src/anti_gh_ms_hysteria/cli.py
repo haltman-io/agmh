@@ -20,6 +20,7 @@ from .ui import UI, setup_logging
 
 
 SAMPLE_CONFIG = """workspace = ".aghm"
+mode = "full"
 dry_run = false
 verbose = 0
 tui = true
@@ -53,7 +54,7 @@ push_mode = "mirror"
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     raw = list(sys.argv[1:] if argv is None else argv)
-    commands = {"run", "discover", "init-config", "state", "-h", "--help"}
+    commands = {"run", "local-mirror", "remote-mirror", "discover", "init-config", "state", "-h", "--help"}
     if not raw or raw[0] not in commands:
         raw = ["run", *raw]
     args = parser.parse_args(raw)
@@ -75,8 +76,16 @@ def build_parser() -> argparse.ArgumentParser:
     add_runtime_args(run)
     run.set_defaults(handler=run_command)
 
+    local = sub.add_parser("local-mirror", help="clone or update local mirrors without pushing anywhere")
+    add_runtime_args(local, destinations=False, mode=False)
+    local.set_defaults(handler=run_command, workflow_mode="local")
+
+    remote = sub.add_parser("remote-mirror", help="push previously cloned local mirrors to destinations")
+    add_runtime_args(remote, mode=False)
+    remote.set_defaults(handler=run_command, workflow_mode="remote")
+
     discover = sub.add_parser("discover", help="list accessible GitHub repositories")
-    add_runtime_args(discover, destinations=False)
+    add_runtime_args(discover, destinations=False, mode=False)
     discover.add_argument("--output", type=Path, help="write JSON discovery output to this file")
     discover.set_defaults(handler=discover_command)
 
@@ -92,8 +101,18 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def add_runtime_args(parser: argparse.ArgumentParser, destinations: bool = True) -> None:
+def add_runtime_args(
+    parser: argparse.ArgumentParser,
+    destinations: bool = True,
+    mode: bool = True,
+) -> None:
     parser.add_argument("--config", type=Path, help="TOML config file")
+    if mode:
+        parser.add_argument(
+            "--mode",
+            choices=["full", "local", "remote"],
+            help="workflow mode: full clones and pushes, local only clones, remote only pushes local mirrors",
+        )
     parser.add_argument("--sources", type=Path, help="text file with one GitHub profile URL per line")
     parser.add_argument("--source", action="append", default=[], help="GitHub profile URL; repeatable")
     parser.add_argument("--github-token", action="append", default=[], help="GitHub token value or env:NAME; repeatable")
@@ -138,8 +157,11 @@ def add_runtime_args(parser: argparse.ArgumentParser, destinations: bool = True)
 
 def run_command(args: argparse.Namespace) -> int:
     cfg = build_config_from_args(args, include_destinations=True)
-    if not cfg.github.profiles:
+    if cfg.mode != "remote" and not cfg.github.profiles:
         print("No GitHub source profiles were provided.", file=sys.stderr)
+        return 2
+    if cfg.mode == "remote" and not cfg.destinations:
+        print("No remote destinations were provided.", file=sys.stderr)
         return 2
     logger, log_path = setup_logging(cfg.workspace, cfg.verbose)
     ui = UI(logger, use_rich=cfg.tui, verbose=cfg.verbose)
@@ -196,7 +218,8 @@ def state_command(args: argparse.Namespace) -> int:
 
 
 def build_config_from_args(args: argparse.Namespace, include_destinations: bool) -> AppConfig:
-    cfg = load_config(args.config)
+    mode_override = _mode_override(args)
+    cfg = load_config(args.config, mode_override=mode_override)
     if args.workspace:
         cfg.workspace = args.workspace
     if args.local_dir:
@@ -238,11 +261,12 @@ def build_config_from_args(args: argparse.Namespace, include_destinations: bool)
     if args.exclude_forks:
         cfg.backup.include_forks = False
 
-    apply_profile_file(cfg, args.sources)
-    cfg.github.profiles.extend(args.source)
-    cfg.github.tokens.extend(parse_cli_token(token) for token in args.github_token)
+    if cfg.mode != "remote":
+        apply_profile_file(cfg, args.sources)
+        cfg.github.profiles.extend(args.source)
+        cfg.github.tokens.extend(parse_cli_token(token) for token in args.github_token)
 
-    if include_destinations:
+    if include_destinations and cfg.mode != "local":
         apply_destinations_file(cfg, args.destinations)
         cfg.destinations.extend(destination_from_url(url) for url in args.destination)
         destination_tokens = [parse_destination_token(value) for value in args.destination_token]
@@ -255,3 +279,11 @@ def build_config_from_args(args: argparse.Namespace, include_destinations: bool)
             if not matched:
                 print(f"WARNING: no destination matched token platform {platform}", file=sys.stderr)
     return cfg
+
+
+def _mode_override(args: argparse.Namespace) -> str | None:
+    command_mode = getattr(args, "workflow_mode", None)
+    explicit_mode = getattr(args, "mode", None)
+    if command_mode and explicit_mode and command_mode != explicit_mode:
+        raise ConfigError(f"{args.command} uses mode {command_mode!r}; do not also pass --mode {explicit_mode!r}")
+    return explicit_mode or command_mode

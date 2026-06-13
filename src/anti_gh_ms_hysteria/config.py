@@ -21,9 +21,12 @@ class ConfigError(ValueError):
     pass
 
 
-def load_config(path: Path | None) -> AppConfig:
+def load_config(path: Path | None, mode_override: str | None = None) -> AppConfig:
     if path is None:
-        return AppConfig()
+        cfg = AppConfig()
+        if mode_override:
+            cfg.mode = _workflow_mode(mode_override)
+        return cfg
     try:
         text = path.read_text(encoding="utf-8")
     except OSError as exc:
@@ -36,16 +39,21 @@ def load_config(path: Path | None) -> AppConfig:
 
     base_dir = path.parent
     try:
-        return config_from_dict(data, base_dir)
+        return config_from_dict(data, base_dir, mode_override=mode_override)
     except ConfigError:
         raise
     except ValueError as exc:
         raise ConfigError(f"Invalid config in {path}: {exc}") from exc
 
 
-def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppConfig:
+def config_from_dict(
+    data: dict[str, Any],
+    base_dir: Path | None = None,
+    mode_override: str | None = None,
+) -> AppConfig:
     base_dir = base_dir or Path.cwd()
     cfg = AppConfig()
+    cfg.mode = _workflow_mode(mode_override or data.get("mode", cfg.mode))
     cfg.workspace = _path(data.get("workspace"), base_dir, cfg.workspace)
     cfg.dry_run = bool(data.get("dry_run", cfg.dry_run))
     cfg.verbose = int(data.get("verbose", cfg.verbose))
@@ -61,10 +69,10 @@ def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppC
         api_base=str(github.get("api_base", cfg.github.api_base)),
         profiles_file=_optional_path(github.get("profiles_file"), base_dir),
         profiles=list(github.get("profiles", cfg.github.profiles)),
-        tokens=_token_list(github.get("tokens", []), "github.tokens"),
+        tokens=[] if cfg.mode == "remote" else _token_list(github.get("tokens", []), "github.tokens"),
     )
 
-    if not cfg.github.tokens:
+    if cfg.mode != "remote" and not cfg.github.tokens:
         cfg.github.tokens = _default_env_tokens(
             [("GITHUB_TOKEN", "GITHUB_TOKEN"), ("GH_TOKEN", "GH_TOKEN")]
         )
@@ -115,9 +123,10 @@ def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppC
         ),
     )
 
-    cfg.destinations = [
-        _destination_from_dict(raw) for raw in data.get("destinations", [])
-    ]
+    if cfg.mode != "local":
+        cfg.destinations = [
+            _destination_from_dict(raw) for raw in data.get("destinations", [])
+        ]
 
     return cfg
 
@@ -271,6 +280,24 @@ def _marker_filename(value: Any) -> str:
     ):
         raise ValueError("backup.marker_filename must be a plain filename, not a path")
     return marker
+
+
+def _workflow_mode(value: Any) -> str:
+    mode = str(value or "full").strip().lower()
+    aliases = {
+        "default": "full",
+        "all": "full",
+        "local-only": "local",
+        "local_mirror": "local",
+        "local-mirror": "local",
+        "remote-only": "remote",
+        "remote_mirror": "remote",
+        "remote-mirror": "remote",
+    }
+    mode = aliases.get(mode, mode)
+    if mode not in {"full", "local", "remote"}:
+        raise ConfigError("mode must be one of: full, local, remote")
+    return mode
 
 
 def _toml_error_hint(text: str) -> str:

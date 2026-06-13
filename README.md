@@ -137,6 +137,8 @@ AGMH can:
 - Use one or more GitHub tokens to increase API limits and access private repos.
 - Rotate tokens when rate limits or authorization failures happen.
 - Clone each repository locally using `git clone --mirror`.
+- Run in local-only mode to download/update mirrors without pushing anywhere.
+- Run in remote-only mode to push existing local mirrors to configured destinations later.
 - Keep a local backup under `backups/` by default.
 - Add `anti-gh-ms-hysteria.txt` to the default branch before mirroring.
 - Create destination repositories through platform APIs.
@@ -286,6 +288,57 @@ Check state:
 agmh state --config agmh.config.toml
 ```
 
+## Workflow Modes
+
+Default full workflow:
+
+```bash
+agmh run --config agmh.config.toml --verbose
+```
+
+This discovers GitHub repositories, clones or updates local mirrors, adds the
+marker commit, creates destination repositories, and pushes mirrors.
+
+Local mirror only:
+
+```bash
+agmh local-mirror --config agmh.config.toml --verbose
+```
+
+Equivalent:
+
+```bash
+agmh run --config agmh.config.toml --mode local --verbose
+```
+
+This discovers GitHub repositories and only clones or updates local bare mirrors
+under `backup.local_dir`. It does not create marker commits and does not contact
+destination forges, even if destinations are present in the config.
+
+Remote mirror from existing local mirrors:
+
+```bash
+agmh remote-mirror --config agmh.config.toml --verbose
+```
+
+Equivalent:
+
+```bash
+agmh run --config agmh.config.toml --mode remote --verbose
+```
+
+This does not discover or clone from GitHub. It reads mirrors recorded in
+`.aghm/state.json`, falls back to scanning `backup.local_dir`, adds the marker
+commit if needed, creates destination repositories, and pushes the local mirrors.
+When AGMH has to scan local mirrors without state metadata, repository privacy is
+unknown, so it treats those repositories as private by default.
+
+You can also set the mode in TOML:
+
+```toml
+mode = "full"   # full, local, or remote
+```
+
 ## Input Files
 
 AGMH reads source profiles from a plain text file. One GitHub profile or
@@ -316,6 +369,7 @@ https://git.sr.ht/~extencil
 
 ```toml
 workspace = ".aghm"
+mode = "full"
 dry_run = false
 verbose = 0
 tui = true
@@ -384,6 +438,7 @@ Top-level options:
 
 | Key | Meaning |
 | --- | --- |
+| `mode` | Workflow mode: `full`, `local`, or `remote`. Default: `full`. |
 | `workspace` | Local state and logs directory. Default: `.aghm`. |
 | `dry_run` | Plan actions without cloning, creating, or pushing. |
 | `verbose` | Default verbosity level. CLI `-v` can override it. |

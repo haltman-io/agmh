@@ -62,6 +62,26 @@ class RecordingGitRunner:
         return subprocess.CompletedProcess(args, 0, "", "")
 
 
+class LocalOnlyGit:
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.clone_calls = 0
+        self.marker_calls = 0
+
+    def mirror_path(self, repo: RepoInfo) -> Path:
+        return self.root / "backups" / repo.source_platform / repo.owner / f"{repo.name}.git"
+
+    def clone_or_update(self, repo: RepoInfo, token: TokenCredential | None) -> tuple[Path, str]:
+        self.clone_calls += 1
+        path = self.mirror_path(repo)
+        path.mkdir(parents=True)
+        return path, "2026-06-13T00:00:00Z"
+
+    def ensure_marker_commit(self, repo: RepoInfo, mirror_path: Path, downloaded_at: str) -> str:
+        self.marker_calls += 1
+        raise AssertionError("local mode must not create marker commits")
+
+
 def repo_info(name: str = "repo") -> RepoInfo:
     return RepoInfo(
         source_platform="github",
@@ -184,6 +204,35 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             config_from_dict({"backup": {"marker_filename": "../evil.txt"}}, Path.cwd())
 
+    def test_local_mode_does_not_require_destination_token_envs(self) -> None:
+        os.environ.pop("AGHM_MISSING_DEST_TOKEN", None)
+        cfg = config_from_dict(
+            {
+                "mode": "local",
+                "destinations": [
+                    {
+                        "url": "https://gitlab.com/extencil",
+                        "tokens": [{"env": "AGHM_MISSING_DEST_TOKEN"}],
+                    }
+                ],
+            },
+            Path.cwd(),
+        )
+        self.assertEqual(cfg.mode, "local")
+        self.assertEqual(cfg.destinations, [])
+
+    def test_remote_mode_does_not_require_github_token_envs(self) -> None:
+        os.environ.pop("AGHM_MISSING_GITHUB_TOKEN", None)
+        cfg = config_from_dict(
+            {
+                "mode": "remote",
+                "github": {"tokens": [{"env": "AGHM_MISSING_GITHUB_TOKEN"}]},
+            },
+            Path.cwd(),
+        )
+        self.assertEqual(cfg.mode, "remote")
+        self.assertEqual(cfg.github.tokens, [])
+
 
 class StateTests(unittest.TestCase):
     def test_state_persists_steps(self) -> None:
@@ -277,6 +326,71 @@ class RunnerTests(unittest.TestCase):
             )
             result = MirrorRunner(cfg, DummyUI()).run()
         self.assertEqual(result, 1)
+
+    def test_local_mode_clones_without_marker_or_destinations(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = AppConfig(
+                mode="local",
+                workspace=Path(tmp) / ".aghm",
+                backup=BackupConfig(local_dir=Path(tmp) / "backups"),
+                github=GitHubConfig(profiles=["https://github.com/owner"]),
+            )
+            runner = MirrorRunner(cfg, DummyUI())
+            local_git = LocalOnlyGit(Path(tmp))
+            runner.git = local_git
+
+            result = runner._process_repo(repo_info())
+
+        self.assertTrue(result)
+        self.assertEqual(local_git.clone_calls, 1)
+        self.assertEqual(local_git.marker_calls, 0)
+
+    def test_remote_mode_pushes_existing_state_mirror(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            mirror_path = Path(tmp) / "backups" / "github" / "owner" / "repo.git"
+            mirror_path.mkdir(parents=True)
+            (mirror_path / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+            cfg = AppConfig(
+                mode="remote",
+                workspace=Path(tmp) / ".aghm",
+                backup=BackupConfig(local_dir=Path(tmp) / "backups"),
+                destinations=[
+                    DestinationConfig(
+                        url="https://gitlab.com/owner",
+                        platform="gitlab",
+                        owner="owner",
+                        create=False,
+                    )
+                ],
+            )
+            state = StateStore(cfg.workspace / "state.json")
+            state.mark_repo_metadata(
+                "github:owner/repo",
+                source_url="https://github.com/owner/repo",
+                full_name="owner/repo",
+                private=True,
+                default_branch="main",
+            )
+            state.mark_step(
+                "github:owner/repo",
+                "clone",
+                "done",
+                path=str(mirror_path),
+                downloaded_at="2026-06-13T00:00:00Z",
+            )
+            state.mark_step("github:owner/repo", "marker", "done", branch="main")
+
+            runner = MirrorRunner(cfg, DummyUI())
+            pushes = []
+
+            def record_push(path: Path, push_url: str, push_mode: str, default_branch: str | None) -> None:
+                pushes.append((path, push_url, push_mode, default_branch))
+
+            runner.git.push = record_push
+            result = runner.run()
+
+        self.assertEqual(result, 0)
+        self.assertEqual(pushes, [(mirror_path, "https://gitlab.com/owner/repo.git", "mirror", "main")])
 
 
 if __name__ == "__main__":

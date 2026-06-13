@@ -7,6 +7,7 @@ from typing import Literal
 
 VisibilityMode = Literal["mirror", "public", "private", "unlisted"]
 PushMode = Literal["mirror", "portable-mirror", "all", "default"]
+WorkflowMode = Literal["full", "local", "remote"]
 
 
 @dataclass(frozen=True)
@@ -99,6 +100,7 @@ class DestinationConfig:
 
 @dataclass
 class AppConfig:
+    mode: WorkflowMode = "full"
     workspace: Path = Path(".aghm")
     dry_run: bool = False
     verbose: int = 0

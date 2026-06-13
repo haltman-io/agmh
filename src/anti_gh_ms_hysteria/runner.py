@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from dataclasses import dataclass
 from pathlib import Path
 
 from .destinations import build_destination
@@ -12,6 +13,14 @@ from .sources.github import GitHubSource
 from .state import StateStore
 from .ui import UI
 from .utils import scrub_secret, utc_now_iso
+
+
+@dataclass(frozen=True)
+class LocalMirror:
+    repo: RepoInfo
+    path: Path
+    downloaded_at: str
+    privacy_known: bool = True
 
 
 class MirrorRunner:
@@ -32,6 +41,9 @@ class MirrorRunner:
         return self.source.discover()
 
     def run(self) -> int:
+        if self.cfg.mode == "remote":
+            return self._run_remote_mirror()
+
         repos = self.discover()
         self.ui.info(f"Discovered {len(repos)} GitHub repositories")
         discovery_failures = len(self.source.discovery_errors)
@@ -47,7 +59,30 @@ class MirrorRunner:
             if repository_failures:
                 self.ui.warning(f"Completed with {repository_failures} repository-level failures")
             return 1
-        self.ui.success("Completed all repository workflows")
+        if self.cfg.mode == "local":
+            self.ui.success("Completed local mirror workflow")
+        else:
+            self.ui.success("Completed all repository workflows")
+        return 0
+
+    def _run_remote_mirror(self) -> int:
+        mirrors = self._local_mirrors()
+        self.ui.info(f"Loaded {len(mirrors)} local mirrors")
+        if not mirrors:
+            self.ui.error(
+                f"No local mirrors found in state or under {self.cfg.backup.local_dir}. "
+                "Run local-mirror first or set backup.local_dir to the mirror directory."
+            )
+            return 1
+
+        failures = 0
+        for mirror in mirrors:
+            if not self._process_local_mirror(mirror):
+                failures += 1
+        if failures:
+            self.ui.warning(f"Completed with {failures} local mirror push failure(s)")
+            return 1
+        self.ui.success("Completed remote mirror workflow")
         return 0
 
     def write_discovery_json(self, path: Path | None = None) -> list[RepoInfo]:
@@ -98,6 +133,45 @@ class MirrorRunner:
             self.ui.error(f"Clone/update failed for {repo.full_name}: {exc}")
             return False
 
+        if self.cfg.mode == "local":
+            self.ui.info(f"Local mirror mode: skipping marker and destinations for {repo.full_name}")
+            return True
+
+        return self._finish_repo_workflow(repo, mirror_path, downloaded_at, branch)
+
+    def _process_local_mirror(self, mirror: LocalMirror) -> bool:
+        repo = mirror.repo
+        key = repo.key
+        mirror_path = mirror.path
+        branch = repo.default_branch or "main"
+        self.state.mark_repo_metadata(
+            key,
+            source_url=repo.web_url,
+            full_name=repo.full_name,
+            private=repo.private,
+            default_branch=repo.default_branch,
+            privacy_known=mirror.privacy_known,
+        )
+        if not self.state.is_done(key, "clone"):
+            self._mark_step(key, "clone", "done", path=str(mirror_path), downloaded_at=mirror.downloaded_at)
+        if not mirror_path.exists():
+            self._mark_step(key, "remote-mirror", "failed", error=f"Local mirror does not exist: {mirror_path}")
+            self.ui.error(f"Local mirror does not exist for {repo.full_name}: {mirror_path}")
+            return False
+        if not mirror.privacy_known:
+            self.ui.warning(
+                f"Privacy is unknown for scanned local mirror {repo.full_name}; treating it as private"
+            )
+        return self._finish_repo_workflow(repo, mirror_path, mirror.downloaded_at, branch)
+
+    def _finish_repo_workflow(
+        self,
+        repo: RepoInfo,
+        mirror_path: Path,
+        downloaded_at: str,
+        branch: str,
+    ) -> bool:
+        key = repo.key
         try:
             if self._should_skip_step(key, "marker"):
                 self.ui.info(f"Skipping marker for {repo.full_name}; state already marks it done")
@@ -116,6 +190,73 @@ class MirrorRunner:
             if not self._process_destination(repo, mirror_path, branch, destination):
                 destination_failures += 1
         return destination_failures == 0
+
+    def _local_mirrors(self) -> list[LocalMirror]:
+        mirrors_by_key: dict[str, LocalMirror] = {}
+        for mirror in self._local_mirrors_from_state():
+            mirrors_by_key[mirror.repo.key] = mirror
+        for mirror in self._local_mirrors_from_disk():
+            mirrors_by_key.setdefault(mirror.repo.key, mirror)
+        return sorted(mirrors_by_key.values(), key=lambda item: item.repo.full_name.lower())
+
+    def _local_mirrors_from_state(self) -> list[LocalMirror]:
+        mirrors: list[LocalMirror] = []
+        for key, entry in self.state.data.get("repos", {}).items():
+            clone_step = entry.get("steps", {}).get("clone", {})
+            if clone_step.get("status") != "done":
+                continue
+            full_name = str(entry.get("full_name") or _full_name_from_key(key))
+            owner, name = _split_full_name(full_name)
+            repo = RepoInfo(
+                source_platform=key.split(":", 1)[0] if ":" in key else "github",
+                owner=owner,
+                name=name,
+                full_name=full_name,
+                web_url=str(entry.get("source_url") or f"https://github.com/{full_name}"),
+                clone_url="",
+                ssh_url=None,
+                default_branch=entry.get("default_branch") or None,
+                private=bool(entry.get("private", False)),
+            )
+            path = Path(str(clone_step.get("path") or self.git.mirror_path(repo)))
+            downloaded_at = str(clone_step.get("downloaded_at") or entry.get("updated_at") or utc_now_iso())
+            mirrors.append(LocalMirror(repo=repo, path=path, downloaded_at=downloaded_at))
+        return mirrors
+
+    def _local_mirrors_from_disk(self) -> list[LocalMirror]:
+        base = self.cfg.backup.local_dir
+        if not base.exists():
+            return []
+        mirrors: list[LocalMirror] = []
+        for source_dir in sorted(path for path in base.iterdir() if path.is_dir()):
+            for owner_dir in sorted(path for path in source_dir.iterdir() if path.is_dir()):
+                for mirror_path in sorted(owner_dir.glob("*.git")):
+                    if not _looks_like_local_mirror(mirror_path):
+                        continue
+                    source = source_dir.name
+                    owner = owner_dir.name
+                    name = mirror_path.name.removesuffix(".git")
+                    full_name = f"{owner}/{name}"
+                    repo = RepoInfo(
+                        source_platform=source,
+                        owner=owner,
+                        name=name,
+                        full_name=full_name,
+                        web_url=f"https://github.com/{full_name}" if source == "github" else full_name,
+                        clone_url="",
+                        ssh_url=None,
+                        default_branch=_default_branch_from_head(mirror_path),
+                        private=True,
+                    )
+                    mirrors.append(
+                        LocalMirror(
+                            repo=repo,
+                            path=mirror_path,
+                            downloaded_at=utc_now_iso(),
+                            privacy_known=False,
+                        )
+                    )
+        return mirrors
 
     def _process_destination(
         self,
@@ -258,3 +399,29 @@ def _looks_like_transient_git_network_error(text: str) -> bool:
         "curl 56",
     ]
     return any(pattern in text for pattern in patterns)
+
+
+def _full_name_from_key(key: str) -> str:
+    return key.split(":", 1)[1] if ":" in key else key
+
+
+def _split_full_name(full_name: str) -> tuple[str, str]:
+    owner, _, name = full_name.partition("/")
+    if not owner or not name:
+        raise ValueError(f"Invalid repository full name in state: {full_name}")
+    return owner, name
+
+
+def _looks_like_local_mirror(path: Path) -> bool:
+    return path.is_dir() and (path / "HEAD").is_file()
+
+
+def _default_branch_from_head(path: Path) -> str | None:
+    try:
+        text = (path / "HEAD").read_text(encoding="utf-8").strip()
+    except OSError:
+        return None
+    prefix = "ref: refs/heads/"
+    if text.startswith(prefix):
+        return text.removeprefix(prefix)
+    return None
