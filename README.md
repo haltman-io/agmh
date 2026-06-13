@@ -16,9 +16,9 @@ it to another forge without losing years of history, branches, tags, or research
 
 It discovers repositories from supported source profiles, organizations, groups,
 namespaces, or workspaces; clones them locally as mirrors; adds a small
-provenance marker file; creates matching repositories on destination platforms;
-and pushes the backup to GitHub, GitLab, Codeberg/Forgejo, SourceHut,
-Bitbucket, or compatible Git remotes.
+provenance marker file when enabled; creates matching repositories on
+destination platforms; and pushes the backup to GitHub, GitLab,
+Codeberg/Forgejo, SourceHut, Bitbucket, or compatible Git remotes.
 
 The primary CLI command is:
 
@@ -29,120 +29,23 @@ agmh
 The legacy typo `aghm` was removed. AGMH intentionally uses `agmh` for commands,
 default config files, state directories, logs, and generated marker files.
 
-## Project Statement
+## Contents
 
-This tool exists because important work should not depend on a single platform
-remaining available, cooperative, or operational forever.
+- [Capabilities](#capabilities)
+- [Supported Platforms](#supported-platforms)
+- [System Requirements](#system-requirements)
+- [Installation](#installation)
+- [Quick Start](#quick-start)
+- [Workflow Modes](#workflow-modes)
+- [Input Files](#input-files)
+- [Configuration](#configuration)
+- [Operations](#operations)
+- [Troubleshooting](#troubleshooting)
+- [Security Notes](#security-notes)
+- [Development](#development)
+- [Project Background](#project-background)
 
-AGMH was built after past platform access incidents made us reassess the risk of
-being locked out of a large technology platform without enough time to preserve
-our work or coordinate with the people closest to a project. The risk is similar
-to an abrupt offboarding process where access is disabled so quickly that a
-person cannot even send a final email to close colleagues.
-
-For software projects, that access risk is broader than any single account or
-provider. A team can lose continuity because of enforcement actions, sanctions,
-provider policy changes, operational outages, service degradation, acquisition
-risk, or a platform eventually disappearing. The critical issue is
-centralization: if repository history, issues, branches, tags, release metadata,
-and collaboration context all live in one place, a disruption in that place can
-have a large impact on the surrounding ecosystem.
-
-This is not a personal fight with GitHub. It is a risk-management and business
-continuity problem. AGMH provides a practical way to keep local mirrors, move
-repositories between forges, preserve Git history, and maintain high
-availability of project information when a centralized platform becomes
-unavailable or unsuitable.
-
-AGMH is produced by **Haltman.IO** and released freely so others can protect
-their own work.
-
-This tool has already been used to back up repositories from `@extencil` and
-`@haltman-io` to GitLab, Codeberg, and SourceHut successfully.
-
-## Continuity Incident Timeline
-
-AGMH was used to move the work of `@extencil` and `@haltman-io` away from a
-single forge dependency and into independent mirrors:
-
-- GitLab: https://gitlab.com/extencil
-- Codeberg: https://codeberg.org/extencil
-- SourceHut: https://git.sr.ht/~extencil
-- GitLab: https://gitlab.com/haltman-io
-- Codeberg: https://codeberg.org/haltman
-
-The account access incident that reinforced this risk model followed this
-timeline:
-
-| Event | Time |
-| --- | --- |
-| Account suspended/banned by platform enforcement | Monday, 2026-06-08, around 04:00 `America/Sao_Paulo` (`UTC-03:00`), approximately 2026-06-08 07:00 UTC |
-| Review ticket opened | 2026-06-08 07:59 UTC, 2026-06-08 04:59 `America/Sao_Paulo` |
-| Priority follow-up sent by our side | 2026-06-11 16:47 UTC, 2026-06-11 13:47 `America/Sao_Paulo` |
-| Case reviewed and reverted by GitHub | 2026-06-12 11:19 UTC, 2026-06-12 08:19 `America/Sao_Paulo` |
-
-The incident would have been significantly more damaging without continuity
-procedures already in place. When Haltman.IO created its GitHub organization,
-other Haltman.IO members were assigned as organization owners. That avoided a
-complete lockout scenario.
-
-Someone who is not part of an organization, or who is not an organization owner
-or repository administrator, cannot reliably operate that organization. They
-cannot recover organization-level access, manage owners and teams, change
-organization settings, manage repository permissions, configure secrets,
-webhooks, deploy keys, branch protection, or security settings, create or
-transfer repositories, publish releases, or consistently triage and merge work
-across the organization.
-
-This matters because the affected work is operational, not cosmetic. Haltman.IO
-voluntarily sustains email-forwarding infrastructure associated with The
-Hacker's Choice, in collaboration with Phrack, Eurocompton, team-teso, Antisec,
-pwnbuffer, and other groups connected to cybersecurity research. A complete
-organization lockout would have affected the ability to manage the many
-repositories behind that email-forwarding stack.
-
-That impact is not about minor product changes or visual polish. It affects the
-ability to coordinate proper vulnerability disclosure for people who self-host
-the email-forwarding stack, publish fixes, document operational changes, and
-credit researchers correctly when they report vulnerabilities.
-
-It also affects our internal service expectations. There is no legal or
-commercial SLA: we do not sell this work, and the output is public work for the
-public. Still, we prefer to respond to issues and pull requests quickly. Acting
-like a large platform with effectively unbounded response times is neither our
-role nor consistent with Haltman.IO's operating values.
-
-## Haltman.IO
-
-Haltman is a group of Brazilian hackers. Friends for over a decade, building
-public, privacy-first infrastructure and free software.
-
-We build, break, audit, and publish.
-
-We do not sell platforms. We do not run franchises.
-
-We do not ask permission.
-
-Haltman.IO links:
-
-- Website: https://haltman.io/
-- Alternate website: https://haltman.org/
-- Contact: root@haltman.io, root@haltman.org
-- Join Haltman.IO: https://haltman.io/join/
-- Telegram group: https://t.me/haltman_group
-
-### Operating Values
-
-| Doctrine | Value |
-| --- | --- |
-| 01 Independence | We answer to no one. No board. No investors. No sponsors. Our independence guarantees our freedom. |
-| 02 Transparency | Every tool is open source. Every decision is visible. No back rooms. No hidden agendas. |
-| 03 Public Output | We publish. We document. We release. Our work speaks for itself. Not our marketing. |
-| 04 No Hierarchy | Flat structure. No leaders. No bosses. No titles. No org charts. Respect is earned by output. |
-| 05 Mutual Aid | When one of us needs help, the others show up. No invoices. No politics. Just engineering. |
-| 06 No Compromise | We do not water down our principles for comfort, profit, or acceptance. Those who trade freedom for security end up with neither. |
-
-## What It Does
+## Capabilities
 
 AGMH can:
 
@@ -154,7 +57,7 @@ AGMH can:
 - Run in local-only mode to download/update mirrors without pushing anywhere.
 - Run in remote-only mode to push existing local mirrors to configured destinations later.
 - Keep a local backup under `backups/` by default.
-- Add `agmh.txt` to the default branch before mirroring.
+- Optionally add `agmh.txt` to the default branch before remote mirroring.
 - Create destination repositories through platform APIs.
 - Preserve repository name and public/private visibility where supported.
 - Push mirrors to GitHub, GitLab, Codeberg/Forgejo, SourceHut, Bitbucket, and similar Git destinations.
@@ -190,7 +93,7 @@ Destination support:
 | SourceHut | Yes | Optional | Yes | API token creates repositories, SSH is recommended for Git pushes. |
 | Bitbucket | Yes | Yes | Possible with custom URL | Requires Bitbucket-compatible credentials. |
 
-## Requirements
+## System Requirements
 
 - Python 3.11 or newer.
 - Git available in `PATH`.
@@ -306,6 +209,15 @@ agmh state --config agmh.config.toml
 ```
 
 ## Workflow Modes
+
+Use this table to choose the right command:
+
+| Goal | Command | Reads sources | Pushes destinations |
+| --- | --- | --- | --- |
+| Download mirrors and push them now | `agmh run --config agmh.config.toml` | Yes | Yes |
+| Download or update local mirrors only | `agmh local-mirror --config agmh.config.toml` | Yes | No |
+| Push mirrors that already exist locally | `agmh remote-mirror --config agmh.config.toml` | No | Yes |
+| Keep polling sources and react to changes | `agmh watching --config agmh.config.toml` | Yes | Depends on `watch.action` |
 
 Default full workflow:
 
@@ -469,7 +381,13 @@ https://codeberg.org/haltman
 https://git.sr.ht/~extencil
 ```
 
-## Full Configuration Example
+## Configuration
+
+Most users should start from `config.example.toml`, then edit `sources_file`,
+`[[sources]]`, and `[[destinations]]` for their environment. Use environment
+variables for tokens and webhook URLs.
+
+### Full Example
 
 ```toml
 workspace = ".agmh"
@@ -579,7 +497,7 @@ push_mode = "mirror"
 push_url_template = "git@git.sr.ht:~{owner}/{repo}"
 ```
 
-## Configuration Reference
+### Reference
 
 Top-level options:
 
@@ -758,7 +676,7 @@ tokens, or destination push URLs containing credentials. The `start` event
 includes sources, destinations, modes, counts, and other operational settings
 from a sanitized config snapshot.
 
-## Tokens
+### Tokens
 
 Use environment variables. Do not hardcode tokens into config files committed to
 Git.
@@ -839,7 +757,9 @@ github-primary = { env = "GITHUB_TOKEN" }
 github-secondary = "env:GITHUB_TOKEN_2"
 ```
 
-## Marker File
+## Operations
+
+### Marker File
 
 By default, before pushing to destinations, AGMH writes a marker file into the
 default branch of the local mirror:
@@ -869,7 +789,7 @@ marker_enabled = false
 When `marker_enabled` is `false`, AGMH does not create or update the marker file
 and does not create a marker commit before pushing to destinations.
 
-## Push Modes
+### Push Modes
 
 `mirror`:
 
@@ -899,7 +819,7 @@ Recommended defaults:
 | SourceHut | `mirror` over SSH, or `portable-mirror` if hidden refs cause rejection |
 | Bitbucket | `portable-mirror` |
 
-## Proxy Usage
+### Proxy Usage
 
 Use an HTTP or HTTPS proxy:
 
@@ -928,7 +848,7 @@ agmh run --config agmh.config.toml --proxy http://127.0.0.1:8080 -k
 This disables certificate verification for API calls and sets
 `GIT_SSL_NO_VERIFY=true` for Git HTTPS operations.
 
-### Segfault.net Proxy Route
+#### Segfault.net Proxy Route
 
 When GitHub API access is being rate-limited, blocked, or degraded from your
 local network, you can route AGMH through a temporary HTTP proxy exposed from a
@@ -1017,7 +937,7 @@ This proxy path affects AGMH API calls and Git HTTPS operations. It does not
 automatically proxy SSH pushes such as `git@git.sr.ht:~user/repo`, because SSH
 does not use the HTTP proxy settings.
 
-## SSH Usage
+### SSH Usage
 
 SourceHut is best used with SSH for Git pushes.
 
@@ -1074,7 +994,7 @@ chmod 700 ~/.ssh
 chmod 600 ~/.ssh/sourcehut_ed25519
 ```
 
-## Dry Run
+### Dry Run
 
 Dry-run still calls platform APIs for discovery. It does not create repos,
 clone, add marker commits, or push.
@@ -1093,7 +1013,7 @@ agmh run --config agmh.config.toml \
   --max-retries 0
 ```
 
-## Resume and State
+### Resume and State
 
 AGMH stores resumable state here:
 
@@ -1125,7 +1045,7 @@ Ignore existing state:
 agmh run --config agmh.config.toml --no-resume
 ```
 
-## Operational Examples
+### Examples
 
 Discover only:
 
@@ -1442,6 +1362,121 @@ CLI smoke test:
 PYTHONPATH=src python -m anti_gh_ms_hysteria run --help
 ```
 
+## Project Background
+
+### Risk Model
+
+This tool exists because important work should not depend on a single platform
+remaining available, cooperative, or operational forever.
+
+AGMH was built after past platform access incidents made us reassess the risk of
+being locked out of a large technology platform without enough time to preserve
+our work or coordinate with the people closest to a project. The risk is similar
+to an abrupt offboarding process where access is disabled so quickly that a
+person cannot even send a final email to close colleagues.
+
+For software projects, that access risk is broader than any single account or
+provider. A team can lose continuity because of enforcement actions, sanctions,
+provider policy changes, operational outages, service degradation, acquisition
+risk, or a platform eventually disappearing. The critical issue is
+centralization: if repository history, issues, branches, tags, release metadata,
+and collaboration context all live in one place, a disruption in that place can
+have a large impact on the surrounding ecosystem.
+
+This is not a personal fight with GitHub. It is a risk-management and business
+continuity problem. AGMH provides a practical way to keep local mirrors, move
+repositories between forges, preserve Git history, and maintain high
+availability of project information when a centralized platform becomes
+unavailable or unsuitable.
+
+AGMH is produced by **Haltman.IO** and released freely so others can protect
+their own work.
+
+This tool has already been used to back up repositories from `@extencil` and
+`@haltman-io` to GitLab, Codeberg, and SourceHut successfully.
+
+### Continuity Incident Timeline
+
+AGMH was used to move the work of `@extencil` and `@haltman-io` away from a
+single forge dependency and into independent mirrors:
+
+- GitLab: https://gitlab.com/extencil
+- Codeberg: https://codeberg.org/extencil
+- SourceHut: https://git.sr.ht/~extencil
+- GitLab: https://gitlab.com/haltman-io
+- Codeberg: https://codeberg.org/haltman
+
+The account access incident that reinforced this risk model followed this
+timeline:
+
+| Event | Time |
+| --- | --- |
+| Account suspended/banned by platform enforcement | Monday, 2026-06-08, around 04:00 `America/Sao_Paulo` (`UTC-03:00`), approximately 2026-06-08 07:00 UTC |
+| Review ticket opened | 2026-06-08 07:59 UTC, 2026-06-08 04:59 `America/Sao_Paulo` |
+| Priority follow-up sent by our side | 2026-06-11 16:47 UTC, 2026-06-11 13:47 `America/Sao_Paulo` |
+| Case reviewed and reverted by GitHub | 2026-06-12 11:19 UTC, 2026-06-12 08:19 `America/Sao_Paulo` |
+
+The incident would have been significantly more damaging without continuity
+procedures already in place. When Haltman.IO created its GitHub organization,
+other Haltman.IO members were assigned as organization owners. That avoided a
+complete lockout scenario.
+
+Someone who is not part of an organization, or who is not an organization owner
+or repository administrator, cannot reliably operate that organization. They
+cannot recover organization-level access, manage owners and teams, change
+organization settings, manage repository permissions, configure secrets,
+webhooks, deploy keys, branch protection, or security settings, create or
+transfer repositories, publish releases, or consistently triage and merge work
+across the organization.
+
+This matters because the affected work is operational, not cosmetic. Haltman.IO
+voluntarily sustains email-forwarding infrastructure associated with The
+Hacker's Choice, in collaboration with Phrack, Eurocompton, team-teso, Antisec,
+pwnbuffer, and other groups connected to cybersecurity research. A complete
+organization lockout would have affected the ability to manage the many
+repositories behind that email-forwarding stack.
+
+That impact is not about minor product changes or visual polish. It affects the
+ability to coordinate proper vulnerability disclosure for people who self-host
+the email-forwarding stack, publish fixes, document operational changes, and
+credit researchers correctly when they report vulnerabilities.
+
+It also affects our internal service expectations. There is no legal or
+commercial SLA: we do not sell this work, and the output is public work for the
+public. Still, we prefer to respond to issues and pull requests quickly. Acting
+like a large platform with effectively unbounded response times is neither our
+role nor consistent with Haltman.IO's operating values.
+
+### Haltman.IO
+
+Haltman is a group of Brazilian hackers. Friends for over a decade, building
+public, privacy-first infrastructure and free software.
+
+We build, break, audit, and publish.
+
+We do not sell platforms. We do not run franchises.
+
+We do not ask permission.
+
+Haltman.IO links:
+
+- Website: https://haltman.io/
+- Alternate website: https://haltman.org/
+- Contact: root@haltman.io, root@haltman.org
+- Join Haltman.IO: https://haltman.io/join/
+- Telegram group: https://t.me/haltman_group
+
+### Operating Values
+
+| Doctrine | Value |
+| --- | --- |
+| 01 Independence | We answer to no one. No board. No investors. No sponsors. Our independence guarantees our freedom. |
+| 02 Transparency | Every tool is open source. Every decision is visible. No back rooms. No hidden agendas. |
+| 03 Public Output | We publish. We document. We release. Our work speaks for itself. Not our marketing. |
+| 04 No Hierarchy | Flat structure. No leaders. No bosses. No titles. No org charts. Respect is earned by output. |
+| 05 Mutual Aid | When one of us needs help, the others show up. No invoices. No politics. Just engineering. |
+| 06 No Compromise | We do not water down our principles for comfort, profit, or acceptance. Those who trade freedom for security end up with neither. |
+
 ## Project Files
 
 - [CHANGELOG.md](CHANGELOG.md): release notes and pending changes.
@@ -1472,8 +1507,6 @@ PYTHONPATH=src python -m anti_gh_ms_hysteria run --help
 - Segfault.net disposable root servers: https://www.thc.org/segfault/
 - Segfault.net service notes: https://www.thc.org/segfault/free/
 - Segfault.net Server Centre source: https://github.com/hackerschoice/segfault
-- ChaoticEclipse0: https://x.com/ChaoticEclipse0
-- xploitrsturtle2: https://x.com/xploitrsturtle2
 
 ## License
 
