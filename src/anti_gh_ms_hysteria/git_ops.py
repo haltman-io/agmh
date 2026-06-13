@@ -104,6 +104,14 @@ class GitMirrorManager:
             / f"{safe_path_part(repo.name)}.git"
         )
 
+    def download_path(self, repo: RepoInfo) -> Path:
+        return (
+            self.cfg.backup.local_dir
+            / safe_path_part(repo.source_platform)
+            / safe_path_part(repo.owner)
+            / safe_path_part(repo.name)
+        )
+
     def clone_or_update(self, repo: RepoInfo, token: TokenCredential | None) -> tuple[Path, str]:
         mirror_path = self.mirror_path(repo)
         mirror_path.parent.mkdir(parents=True, exist_ok=True)
@@ -129,6 +137,34 @@ class GitMirrorManager:
                 )
 
         return mirror_path, downloaded_at
+
+    def download_or_update(self, repo: RepoInfo, token: TokenCredential | None) -> tuple[Path, str]:
+        download_path = self.download_path(repo)
+        download_path.parent.mkdir(parents=True, exist_ok=True)
+        downloaded_at = utc_now_iso()
+        remote_url = self._source_clone_url(repo, token)
+        clean_url = self._clean_source_clone_url(repo)
+
+        try:
+            if download_path.exists():
+                if not (download_path / ".git").is_dir():
+                    raise ValueError(f"Download path exists but is not a Git working tree: {download_path}")
+                self.ui.info(f"Updating source download for {repo.full_name}")
+                self.runner.run(["git", "-C", str(download_path), "remote", "set-url", "origin", remote_url])
+                self.runner.run(["git", "-C", str(download_path), "pull", "--ff-only"])
+            else:
+                self.ui.info(f"Downloading source for {repo.full_name}")
+                self.runner.run(["git", "clone", remote_url, str(download_path)])
+            if self.cfg.backup.lfs:
+                self.runner.run(["git", "-C", str(download_path), "lfs", "pull"], check=False)
+        finally:
+            if (download_path / ".git").is_dir():
+                self.runner.run(
+                    ["git", "-C", str(download_path), "remote", "set-url", "origin", clean_url],
+                    check=False,
+                )
+
+        return download_path, downloaded_at
 
     def ensure_marker_commit(self, repo: RepoInfo, mirror_path: Path, downloaded_at: str) -> str:
         branch = repo.default_branch or "main"

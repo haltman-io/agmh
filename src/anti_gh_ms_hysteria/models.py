@@ -7,8 +7,8 @@ from typing import Literal
 
 VisibilityMode = Literal["mirror", "public", "private", "unlisted"]
 PushMode = Literal["mirror", "portable-mirror", "all", "default"]
-WatchAction = Literal["full", "local", "remote"]
-WorkflowMode = Literal["full", "local", "remote", "watching"]
+WatchAction = Literal["full", "download", "local", "remote"]
+WorkflowMode = Literal["full", "download", "local", "remote", "watching"]
 WebhookPlatform = Literal["generic", "discord", "telegram"]
 
 

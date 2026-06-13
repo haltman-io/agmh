@@ -7,8 +7,8 @@ works, and how to operate it safely.
 
 AGMH is a Python CLI for local Git repository backups and cross-forge mirroring.
 Its operational goal is continuity: discover repositories from one or more
-sources, download local Git mirrors, and optionally push those mirrors to one or
-more destinations.
+sources, download source files as working trees, store local Git mirrors, and
+optionally push those mirrors to one or more destinations.
 
 ## Contents
 
@@ -48,10 +48,12 @@ AGMH uses the following terminology consistently.
 | --- | --- |
 | Source | Where AGMH discovers and downloads repositories from. Examples: GitHub user, GitHub organization, GitLab group, Bitbucket workspace. |
 | Destination | Where AGMH creates repositories and pushes Git mirrors to. Examples: GitHub organization, GitLab namespace, SourceHut account. |
+| Download | Normal working tree created with `git clone`, with files directly visible under `backups/`. |
 | Local mirror | Local bare copy created with `git clone --mirror`, usually under `backups/`. |
 | Remote mirror | Push of an existing local mirror to a remote destination. |
-| Full mode | Complete workflow: discover, download locally, optionally mark, create destination, and push. |
-| Local mode | Only download or update local mirrors. |
+| Full mode | Complete workflow: discover, mirror locally, optionally mark, create destination, and push. |
+| Download mode | Simple local source download workflow. It uses normal `git clone`. |
+| Local mode | Local mirror workflow. It uses `git clone --mirror`. |
 | Remote mode | Only push existing local mirrors to destinations. |
 | Watching mode | Polling loop that detects source updates and runs the configured action. |
 | State | Local `.agmh/state.json` file used to resume operations and record completed steps. |
@@ -103,8 +105,10 @@ AGMH can:
 - Read multiple sources from the same file or from `[[sources]]` blocks.
 - Use different tokens per platform and per source.
 - Download public and private repositories when credentials have access.
+- Save directly accessible working tree downloads with normal `git clone`.
 - Save local bare mirrors with Git history, branches, tags, and refs exposed by
   the source through Git.
+- Update existing working tree downloads with `git pull --ff-only`.
 - Update existing local mirrors with `git remote update --prune`.
 - Create repositories on GitHub, GitLab, Forgejo/Gitea, Codeberg, Bitbucket, and
   SourceHut.
@@ -174,11 +178,12 @@ AGMH cannot:
 
 ## Operation Modes
 
-| Mode | Command | Discovers sources | Updates local mirror | Creates destination | Pushes remote |
+| Mode | Command | Discovers sources | Local result | Creates destination | Pushes remote |
 | --- | --- | --- | --- | --- | --- |
-| Full | `agmh run` | Yes | Yes | Yes | Yes |
-| Local | `agmh local-mirror` | Yes | Yes | No | No |
-| Remote | `agmh remote-mirror` | No | No | Yes | Yes |
+| Full | `agmh run` | Yes | Bare mirror | Yes | Yes |
+| Download | `agmh download` | Yes | Working tree clone | No | No |
+| Local mirror | `agmh local-mirror` | Yes | Bare mirror | No | No |
+| Remote | `agmh remote-mirror` | No | Uses existing bare mirror | Yes | Yes |
 | Watching | `agmh watching` | Yes, by polling | Depends on action | Depends on action | Depends on action |
 
 ### Full mode
@@ -198,21 +203,43 @@ Full mode:
 - creates repositories on destinations;
 - pushes branches and tags according to `push_mode`.
 
-### Local mode
+### Download mode
 
-Use this when you only want to download everything locally:
+Use this when you want source files immediately visible on disk, similar to
+running `git clone` yourself for every discovered repository:
+
+```bash
+agmh download --config agmh.config.toml --verbose
+```
+
+Equivalent `run` mode:
+
+```bash
+agmh run --config agmh.config.toml --mode download --verbose
+```
+
+Download mode stores working trees under `backup.local_dir`, for example
+`backups/github/example/repo/`. It does not create marker commits, does not
+create destinations, and does not prepare a bare mirror for `remote-mirror`.
+
+### Local mirror mode
+
+Use this when you want a local bare mirror that can later be pushed to another
+forge:
 
 ```bash
 agmh local-mirror --config agmh.config.toml --verbose
 ```
 
-Equivalent:
+Equivalent `run` mode:
 
 ```bash
 agmh run --config agmh.config.toml --mode local --verbose
 ```
 
-Local mode does not create marker commits and does not contact any destination.
+Local mirror mode stores bare repositories under `backup.local_dir`, for
+example `backups/github/example/repo.git/`. It does not create marker commits
+and does not contact any destination.
 
 ### Remote mode
 
@@ -660,15 +687,16 @@ ssh_strict_host_key_checking = "accept-new"
 
 ## Scenario Examples
 
-### 1. Local backup of a GitHub organization
+### 1. Download source files from a GitHub organization
 
 Goal: download every accessible repository from a GitHub organization without
-pushing to any destination.
+pushing to any destination. This creates normal working trees with files visible
+inside each repository directory.
 
 ```bash
 export GITHUB_TOKEN="..."
 
-agmh local-mirror \
+agmh download \
   --source https://github.com/haltman-io/ \
   --github-token env:GITHUB_TOKEN \
   --local-dir backups \
@@ -677,7 +705,7 @@ agmh local-mirror \
 
 Expected result:
 
-- mirrors under `backups/github/haltman-io/*.git`;
+- source files under `backups/github/haltman-io/*/`;
 - state under `.agmh/state.json`;
 - no remote repositories created;
 - no marker commit.
@@ -771,7 +799,7 @@ agmh run \
 
 ### 8. Local backup first, remote push later
 
-First, download:
+First, create local mirrors:
 
 ```bash
 export GITHUB_TOKEN="..."
@@ -903,14 +931,14 @@ platform = "gitlab"
 tokens = [{ env = "GITLAB_SOURCE_TOKEN", name = "gitlab-source" }]
 watch = true
 watch_interval_seconds = 120
-watch_action = "local"
+watch_action = "download"
 ```
 
 Useful flags:
 
 ```bash
 agmh watching --config agmh.config.toml --watch-interval 120
-agmh watching --config agmh.config.toml --watch-action local
+agmh watching --config agmh.config.toml --watch-action download
 agmh watching --config agmh.config.toml --no-watch-initial-run
 agmh watching --config agmh.config.toml --watch-once
 ```
@@ -919,8 +947,9 @@ agmh watching --config agmh.config.toml --watch-once
 
 | Action | Behavior |
 | --- | --- |
-| `full` | Download/update locally and push to destinations. |
-| `local` | Only download/update locally. |
+| `full` | Create/update local bare mirrors and push to destinations. |
+| `download` | Clone/update working trees with source files directly visible. |
+| `local` | Create/update local bare mirrors only. |
 | `remote` | Push an existing local mirror to destinations. |
 
 ### What counts as an update
@@ -1234,8 +1263,11 @@ agmh run --config agmh.config.toml --workspace /var/lib/agmh
 
 ### For incident response
 
-- Prioritize `local-mirror` first when there is a risk of losing access.
-- Then run `remote-mirror` to external destinations.
+- Prioritize `download` first when people need immediately readable source
+  files.
+- Prioritize `local-mirror` first when you plan to run `remote-mirror`.
+- Then run `remote-mirror` to external destinations when mirror publishing is
+  needed.
 - Use multiple destinations when continuity matters.
 - Avoid publishing private repositories by accident; prefer
   `--destination-visibility private`.
@@ -1473,9 +1505,14 @@ No. It is enabled by default, but it can be disabled:
 marker_enabled = false
 ```
 
-### Does local mode create a marker?
+### Does download mode create a mirror?
 
-No. Local mode only clones or updates local mirrors.
+No. Download mode creates normal working tree clones with repository files
+visible in the target directory.
+
+### Does local mirror mode create a marker?
+
+No. Local mirror mode only clones or updates bare local mirrors.
 
 ### Does remote mode clone from the source?
 
@@ -1484,6 +1521,7 @@ No. Remote mode uses existing local mirrors.
 ### Does full mode always need a destination?
 
 For remote mirroring, yes. If you only want to download locally, use
+`download`. If you want a local mirror that can be pushed later, use
 `local-mirror`.
 
 ### Is watching mode a webhook?
@@ -1510,7 +1548,7 @@ repositories where people work directly on the destination.
 ### Can I use AGMH from cron?
 
 Yes, but watching mode is usually better under systemd or a supervisor. For
-cron, consider `watch-once`, `local-mirror`, or `run` with persistent state.
+cron, consider `watch-once`, `download`, or `run` with persistent state.
 
 ### Can I use AGMH in CI?
 
@@ -1568,7 +1606,7 @@ restore testing.
 | Key | Type | Default | Description |
 | --- | --- | --- | --- |
 | `workspace` | path | `.agmh` | State, log, and temporary directory. |
-| `mode` | string | `full` | `full`, `local`, `remote`, or `watching`. |
+| `mode` | string | `full` | `full`, `download`, `local`, `remote`, or `watching`. |
 | `dry_run` | bool | `false` | Plans without running main mutations. |
 | `verbose` | int | `0` | Initial verbosity. |
 | `tui` | bool | `true` | Uses Rich when installed. |
@@ -1581,12 +1619,12 @@ restore testing.
 
 | Key | Default | Description |
 | --- | --- | --- |
-| `local_dir` | `backups` | Directory for local mirrors. |
+| `local_dir` | `backups` | Directory for local downloads and mirrors. |
 | `clone_protocol` | `https` | `https` or `ssh`. |
 | `include_archived` | `true` | Includes archived repositories. |
 | `include_forks` | `true` | Includes forks. |
 | `include_private_for_authenticated_user` | `true` | On GitHub, attempts to include private repositories of the authenticated user. |
-| `lfs` | `false` | Runs `git lfs fetch --all`. |
+| `lfs` | `false` | Runs `git lfs pull` for downloads or `git lfs fetch --all` for mirrors. |
 | `marker_enabled` | `true` | Creates marker commit before remote mirroring. |
 | `marker_filename` | `agmh.txt` | Marker file name. |
 | `push_mode` | `mirror` | `mirror`, `portable-mirror`, `all`, or `default`. |
@@ -1620,7 +1658,7 @@ restore testing.
 | Key | Default | Description |
 | --- | --- | --- |
 | `interval_seconds` | `300` | Global polling interval. |
-| `action` | `full` | `full`, `local`, or `remote`. |
+| `action` | `full` | `full`, `download`, `local`, or `remote`. |
 | `initial_run` | `true` | Processes repositories during the first cycle. |
 | `once` | `false` | Runs one cycle and exits. |
 
@@ -1644,7 +1682,7 @@ restore testing.
 | `tokens` | Token list. |
 | `watch` | Enables this source in watching mode. |
 | `watch_interval_seconds` | Source-specific interval. |
-| `watch_action` | Source-specific action. |
+| `watch_action` | Source-specific action: `full`, `download`, `local`, or `remote`. |
 
 ### `[[destinations]]`
 

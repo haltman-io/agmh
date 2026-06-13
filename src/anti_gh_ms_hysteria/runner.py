@@ -86,7 +86,9 @@ class MirrorRunner:
             if repository_failures:
                 self.ui.warning(f"Completed with {repository_failures} repository-level failures")
             return 1
-        if self.cfg.mode == "local":
+        if self.cfg.mode == "download":
+            self.ui.success("Completed download workflow")
+        elif self.cfg.mode == "local":
             self.ui.success("Completed local mirror workflow")
         else:
             self.ui.success("Completed all repository workflows")
@@ -250,7 +252,7 @@ class MirrorRunner:
         return False, "unchanged", fingerprint
 
     def _process_watched_repo(self, repo: RepoInfo, action: str) -> bool:
-        if action in {"full", "local"}:
+        if action in {"full", "download", "local"}:
             return self._process_repo(repo, force_workflow=True, workflow_mode=action)
         mirror_path = self.git.mirror_path(repo)
         if not mirror_path.exists():
@@ -302,6 +304,9 @@ class MirrorRunner:
             visibility=repo.visibility,
             source_updated_at=repo.updated_at,
         )
+        if workflow_mode == "download":
+            return self._process_download(repo, force_workflow)
+
         mirror_path = self.git.mirror_path(repo)
         downloaded_at = utc_now_iso()
         branch = repo.default_branch or "main"
@@ -337,6 +342,40 @@ class MirrorRunner:
             return True
 
         return self._finish_repo_workflow(repo, mirror_path, downloaded_at, branch, force_workflow)
+
+    def _process_download(self, repo: RepoInfo, force_workflow: bool = False) -> bool:
+        key = repo.key
+        download_path = self.git.download_path(repo)
+        downloaded_at = utc_now_iso()
+
+        try:
+            if self._should_skip_step(key, "download", force_workflow) and download_path.exists():
+                self.ui.info(f"Skipping download for {repo.full_name}; state already marks it done")
+                download_step = self.state.repo(key).get("steps", {}).get("download", {})
+                downloaded_at = download_step.get("downloaded_at", downloaded_at)
+            else:
+                token = self.source.current_token(repo)
+                download_path, downloaded_at = self.git.download_or_update(repo, token)
+                self._mark_step(key, "download", "done", path=str(download_path), downloaded_at=downloaded_at)
+                self.notifier.notify(
+                    "local_saved",
+                    "Repository downloaded locally",
+                    f"Downloaded source for {repo.full_name}",
+                    {
+                        "repository": _repo_payload(repo),
+                        "path": str(download_path),
+                        "downloaded_at": downloaded_at,
+                        "mode": "download",
+                    },
+                )
+        except Exception as exc:
+            self._mark_step(key, "download", "failed", error=str(exc))
+            self.ui.error(f"Download/update failed for {repo.full_name}: {exc}")
+            self._notify_error("Download/update failed", repo=repo, error=str(exc))
+            return False
+
+        self.ui.info(f"Download mode: leaving source files available for {repo.full_name}")
+        return True
 
     def _process_local_mirror(self, mirror: LocalMirror, force_workflow: bool = False) -> bool:
         repo = mirror.repo

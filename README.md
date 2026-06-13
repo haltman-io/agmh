@@ -10,9 +10,9 @@ AGMH means **ANTI GITHUB & MICROSOFT HYSTERIA**.
 
 AGMH is a Python CLI for local Git repository backups and cross-forge mirroring.
 It discovers repositories from supported source accounts, organizations, groups,
-namespaces, or workspaces; downloads them locally as Git mirrors; and can push
-those mirrors to GitHub, GitLab, Forgejo/Codeberg, Bitbucket, SourceHut, or
-compatible Git remotes.
+namespaces, or workspaces; downloads source files with regular `git clone`;
+stores local Git mirrors when needed; and can push those mirrors to GitHub,
+GitLab, Forgejo/Codeberg, Bitbucket, SourceHut, or compatible Git remotes.
 
 Package: [agmh on PyPI](https://pypi.org/project/agmh/)
 
@@ -36,13 +36,14 @@ default config files, state directories, logs, and generated marker files.
 
 ## What AGMH Does
 
-- Backs up repositories locally with `git clone --mirror`.
+- Downloads repositories as normal working trees with `git clone`.
+- Backs up repositories locally as bare mirrors with `git clone --mirror`.
 - Discovers repositories from GitHub, GitLab, Forgejo/Gitea, Codeberg,
   Bitbucket, and SourceHut.
 - Pushes mirrors to GitHub, GitLab, Forgejo/Gitea, Codeberg, Bitbucket,
   SourceHut, or custom Git remotes.
-- Supports local-only backups, remote-only mirror publishing, full mirror runs,
-  and polling with `watching`.
+- Supports simple `download` runs, local mirror backups, remote-only mirror
+  publishing, full mirror runs, and polling with `watching`.
 - Uses environment variables for tokens.
 - Keeps resumable state in `.agmh/state.json`.
 - Writes logs under `.agmh/logs/`.
@@ -155,12 +156,14 @@ agmh state --config agmh.config.toml
 
 ### Back Up My GitHub Locally Only
 
-This downloads mirrors and does not push anywhere.
+This runs regular `git clone` operations so repository files are directly
+available under `--local-dir`. It does not create remote repositories and does
+not push anywhere.
 
 ```bash
 export GITHUB_TOKEN="..."
 
-agmh local-mirror \
+agmh download \
   --source https://github.com/YOUR_USER_OR_ORG/ \
   --github-token env:GITHUB_TOKEN \
   --local-dir backups \
@@ -170,7 +173,7 @@ agmh local-mirror \
 Result:
 
 ```text
-backups/github/YOUR_USER_OR_ORG/*.git
+backups/github/YOUR_USER_OR_ORG/REPOSITORY_NAME/
 .agmh/state.json
 .agmh/logs/
 ```
@@ -255,7 +258,7 @@ agmh run \
 
 ### Push Existing Local Mirrors Later
 
-First, download locally:
+First, create local mirrors:
 
 ```bash
 export GITHUB_TOKEN="..."
@@ -323,6 +326,36 @@ agmh watching \
 ```
 
 Watching mode uses polling. It is not an inbound webhook server.
+
+## Examples
+
+Detailed usage examples live in [`examples/`](examples/). Each example starts
+from a clean install where `agmh` works but no tokens, webhooks, destinations,
+or config files exist yet.
+
+| Example | Description |
+| --- | --- |
+| [Visitor discover GitHub organization](examples/01-visitor-discover-github-hackerschoice.md) | Discover public repositories from `hackerschoice` without authentication. |
+| [Discover own public GitHub profile](examples/02-extencil-discover-own-github-profile.md) | Run public-only discovery for `extencil`. |
+| [Local mirror GitHub organization as a member](examples/03-extencil-local-mirror-haltman-github-org.md) | Use a GitHub token to create local bare mirrors for `haltman-io`. |
+| [Mirror GitHub organization to Codeberg](examples/04-skyperthc-github-to-codeberg-hackerschoice-mirror.md) | Mirror `hackerschoice` from GitHub to Codeberg with source and destination tokens. |
+| [Discover GitHub organization as a member](examples/05-extencil-discover-haltman-github-org.md) | Discover `haltman-io` with member-level GitHub access. |
+| [Watch GitHub organization and download updates](examples/06-jiab77-watch-hackerschoice-download.md) | Watch `hackerschoice` and download working trees when updates are detected. |
+| [Download public GitHub organization](examples/07-extencil-download-hackerschoice-github.md) | Download public `hackerschoice` repositories with normal `git clone`. |
+| [Download GitHub organization with Telegram finish notice](examples/08-extencil-download-hackerschoice-telegram-finish.md) | Download public repositories and notify Telegram when AGMH finishes. |
+| [Visitor watch with Discord notifications](examples/09-visitor-watch-extencil-discord-all-events.md) | Watch public `extencil` repositories and notify Discord for all supported events. |
+| [Watch own GitHub profile and mirror to three forges](examples/10-jiab77-watch-own-github-mirror-to-gitlab-codeberg-sourcehut.md) | Mirror a GitHub profile to GitLab, Codeberg, and SourceHut. |
+| [Discover another GitHub user](examples/11-skyperthc-discover-vanhauser-thc-github.md) | Discover public repositories from `vanhauser-thc`. |
+| [Watch two GitHub sources and mirror to GitLab](examples/12-skyperthc-watch-two-github-sources-to-gitlab.md) | Watch a personal profile and organization, then mirror both to GitLab. |
+| [Watch GitHub organization, download, notify Telegram](examples/13-skyperthc-watch-phrackzine-download-telegram.md) | Watch `phrackzine`, download updates, and notify Telegram. |
+| [Download a public GitLab group](examples/14-public-gitlab-group-download.md) | Download public GitLab group repositories as working trees. |
+| [Mirror GitLab group to GitHub as private](examples/15-gitlab-group-to-github-private-mirror.md) | Mirror a GitLab group to private GitHub repositories. |
+| [Discover and download Codeberg repositories](examples/16-codeberg-public-discover-and-download.md) | Use Forgejo/Codeberg source support for public repositories. |
+| [Download a Bitbucket workspace](examples/17-bitbucket-workspace-download.md) | Download Bitbucket workspace repositories with an API token. |
+| [Two-step local mirror then remote mirror](examples/18-two-step-local-mirror-then-remote-mirror.md) | Create local mirrors first, then push them later. |
+| [Discord thread notifications](examples/19-discord-thread-notifications.md) | Send AGMH notifications to a specific Discord thread. |
+| [Dry run and state audit](examples/20-dry-run-and-state-audit.md) | Validate mirror plans with `--dry-run` and inspect AGMH state. |
+| [Shared token and webhook reference](examples/shared-token-and-webhook-reference.md) | Common credential setup notes used by the examples. |
 
 ## Quick Config Example
 

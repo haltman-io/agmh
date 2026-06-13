@@ -167,7 +167,7 @@ def config_from_dict(
         ),
     )
 
-    if cfg.mode != "local":
+    if cfg.mode not in {"download", "local"}:
         cfg.destinations = [
             _destination_from_dict(raw) for raw in data.get("destinations", [])
         ]
@@ -430,6 +430,8 @@ def _workflow_mode(value: Any) -> str:
     aliases = {
         "default": "full",
         "all": "full",
+        "download": "download",
+        "download-only": "download",
         "local-only": "local",
         "local_mirror": "local",
         "local-mirror": "local",
@@ -440,8 +442,8 @@ def _workflow_mode(value: Any) -> str:
         "watching-mode": "watching",
     }
     mode = aliases.get(mode, mode)
-    if mode not in {"full", "local", "remote", "watching"}:
-        raise ConfigError("mode must be one of: full, local, remote, watching")
+    if mode not in {"full", "download", "local", "remote", "watching"}:
+        raise ConfigError("mode must be one of: full, download, local, remote, watching")
     return mode
 
 
@@ -450,6 +452,8 @@ def _watch_action(value: Any, field_name: str) -> str:
     aliases = {
         "all": "full",
         "default": "full",
+        "download": "download",
+        "download-only": "download",
         "local-only": "local",
         "local_mirror": "local",
         "local-mirror": "local",
@@ -458,8 +462,8 @@ def _watch_action(value: Any, field_name: str) -> str:
         "remote-mirror": "remote",
     }
     action = aliases.get(action, action)
-    if action not in {"full", "local", "remote"}:
-        raise ConfigError(f"{field_name} must be one of: full, local, remote")
+    if action not in {"full", "download", "local", "remote"}:
+        raise ConfigError(f"{field_name} must be one of: full, download, local, remote")
     return action
 
 

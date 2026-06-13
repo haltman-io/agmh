@@ -107,6 +107,33 @@ class LocalOnlyGit:
         raise AssertionError("local mode must not create marker commits")
 
 
+class DownloadOnlyGit:
+    def __init__(self, root: Path) -> None:
+        self.root = root
+        self.download_calls = 0
+        self.clone_calls = 0
+        self.marker_calls = 0
+
+    def download_path(self, repo: RepoInfo) -> Path:
+        return self.root / "backups" / repo.source_platform / repo.owner / repo.name
+
+    def download_or_update(self, repo: RepoInfo, token: TokenCredential | None) -> tuple[Path, str]:
+        self.download_calls += 1
+        path = self.download_path(repo)
+        path.mkdir(parents=True)
+        (path / ".git").mkdir()
+        (path / "README.md").write_text("# repo\n", encoding="utf-8")
+        return path, "2026-06-13T00:00:00Z"
+
+    def clone_or_update(self, repo: RepoInfo, token: TokenCredential | None) -> tuple[Path, str]:
+        self.clone_calls += 1
+        raise AssertionError("download mode must not create a local mirror")
+
+    def ensure_marker_commit(self, repo: RepoInfo, mirror_path: Path, downloaded_at: str) -> str:
+        self.marker_calls += 1
+        raise AssertionError("download mode must not create marker commits")
+
+
 class FakeGitHubClient:
     def __init__(self, login: str) -> None:
         self.login = login
@@ -331,6 +358,30 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual([source.platform for source in cfg.sources], ["github", "gitlab"])
         self.assertEqual(cfg.sources[1].owner, "group/subgroup")
 
+    def test_download_command_uses_download_mode(self) -> None:
+        args = build_parser().parse_args(
+            [
+                "download",
+                "--source",
+                "https://github.com/extencil",
+                "--local-dir",
+                "backups",
+            ]
+        )
+        cfg = build_config_from_args(args, include_destinations=True)
+        self.assertEqual(cfg.mode, "download")
+        self.assertEqual(cfg.sources[0].platform, "github")
+
+    def test_run_mode_download_uses_download_mode(self) -> None:
+        args = build_parser().parse_args(["run", "--mode", "download"])
+        cfg = build_config_from_args(args, include_destinations=True)
+        self.assertEqual(cfg.mode, "download")
+
+    def test_cli_watch_action_download_is_distinct(self) -> None:
+        args = build_parser().parse_args(["watching", "--watch-action", "download"])
+        cfg = build_config_from_args(args, include_destinations=True)
+        self.assertEqual(cfg.watch.action, "download")
+
     def test_github_tokens_accept_named_table(self) -> None:
         os.environ["AGMH_GH_1"] = "gh-secret-1"
         os.environ["AGMH_GH_2"] = "gh-secret-2"
@@ -401,6 +452,23 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(cfg.mode, "local")
         self.assertEqual(cfg.destinations, [])
 
+    def test_download_mode_does_not_require_destination_token_envs(self) -> None:
+        os.environ.pop("AGMH_MISSING_DEST_TOKEN", None)
+        cfg = config_from_dict(
+            {
+                "mode": "download",
+                "destinations": [
+                    {
+                        "url": "https://gitlab.com/extencil",
+                        "tokens": [{"env": "AGMH_MISSING_DEST_TOKEN"}],
+                    }
+                ],
+            },
+            Path.cwd(),
+        )
+        self.assertEqual(cfg.mode, "download")
+        self.assertEqual(cfg.destinations, [])
+
     def test_remote_mode_does_not_require_github_token_envs(self) -> None:
         os.environ.pop("AGMH_MISSING_GITHUB_TOKEN", None)
         cfg = config_from_dict(
@@ -459,6 +527,22 @@ class ConfigTests(unittest.TestCase):
         self.assertFalse(cfg.sources[0].watch)
         self.assertEqual(cfg.sources[0].watch_interval_seconds, 10)
         self.assertEqual(cfg.sources[0].watch_action, "remote")
+
+    def test_download_watch_action_is_distinct(self) -> None:
+        cfg = config_from_dict(
+            {
+                "watch": {"action": "download"},
+                "sources": [
+                    {
+                        "url": "https://gitlab.com/group",
+                        "watch_action": "download",
+                    }
+                ],
+            },
+            Path.cwd(),
+        )
+        self.assertEqual(cfg.watch.action, "download")
+        self.assertEqual(cfg.sources[0].watch_action, "download")
 
     def test_watch_interval_must_be_positive(self) -> None:
         with self.assertRaises(ConfigError):
@@ -584,6 +668,38 @@ class GitSshTests(unittest.TestCase):
 
 
 class GitMirrorTests(unittest.TestCase):
+    def test_download_uses_regular_git_clone(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = AppConfig(backup=BackupConfig(local_dir=Path(tmp) / "backups"))
+            runner = RecordingGitRunner()
+            manager = GitMirrorManager(cfg, DummyUI(), runner)
+            repo = repo_info()
+
+            download_path, _ = manager.download_or_update(repo, TokenCredential("secret", name="github"))
+
+        self.assertEqual(download_path, Path(tmp) / "backups" / "github" / "owner" / "repo")
+        self.assertEqual(runner.commands[0][0][0:2], ["git", "clone"])
+        self.assertNotIn("--mirror", runner.commands[0][0])
+        self.assertIn("x-access-token", runner.commands[0][0][2])
+
+    def test_download_update_pulls_existing_working_tree(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = AppConfig(backup=BackupConfig(local_dir=Path(tmp) / "backups", lfs=True))
+            runner = RecordingGitRunner()
+            manager = GitMirrorManager(cfg, DummyUI(), runner)
+            repo = repo_info()
+            download_path = manager.download_path(repo)
+            (download_path / ".git").mkdir(parents=True)
+
+            manager.download_or_update(repo, TokenCredential("secret", name="github"))
+
+        self.assertEqual(runner.commands[0][0][3:6], ["remote", "set-url", "origin"])
+        self.assertIn("x-access-token", runner.commands[0][0][-1])
+        self.assertEqual(runner.commands[1][0][3:], ["pull", "--ff-only"])
+        self.assertEqual(runner.commands[2][0][3:], ["lfs", "pull"])
+        self.assertEqual(runner.commands[3][0][3:6], ["remote", "set-url", "origin"])
+        self.assertEqual(runner.commands[3][0][-1], repo.clone_url)
+
     def test_lfs_fetch_runs_before_origin_url_is_scrubbed(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             cfg = AppConfig(
@@ -886,6 +1002,31 @@ class RunnerTests(unittest.TestCase):
         self.assertTrue(result)
         self.assertEqual(local_git.clone_calls, 1)
         self.assertEqual(local_git.marker_calls, 0)
+        self.assertIn("local_saved", [event[0] for event in notifier.events])
+
+    def test_download_mode_clones_working_tree_without_marker_or_mirror(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            cfg = AppConfig(
+                mode="download",
+                workspace=Path(tmp) / ".agmh",
+                backup=BackupConfig(local_dir=Path(tmp) / "backups"),
+                github=GitHubConfig(profiles=["https://github.com/owner"]),
+            )
+            runner = MirrorRunner(cfg, DummyUI())
+            download_git = DownloadOnlyGit(Path(tmp))
+            runner.git = download_git
+            notifier = FakeNotifier()
+            runner.notifier = notifier
+
+            result = runner._process_repo(repo_info())
+            state_entry = runner.state.repo("github:owner/repo")
+
+        self.assertTrue(result)
+        self.assertEqual(download_git.download_calls, 1)
+        self.assertEqual(download_git.clone_calls, 0)
+        self.assertEqual(download_git.marker_calls, 0)
+        self.assertEqual(state_entry["steps"]["download"]["status"], "done")
+        self.assertNotIn("clone", state_entry["steps"])
         self.assertIn("local_saved", [event[0] for event in notifier.events])
 
     def test_marker_disabled_skips_marker_commit_in_full_mode(self) -> None:

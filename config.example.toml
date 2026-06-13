@@ -54,7 +54,7 @@ timeout_seconds = 10
 # platform = "gitlab"
 # tokens = [{ env = "GITLAB_SOURCE_TOKEN", name = "gitlab-source" }]
 # watch_interval_seconds = 120
-# watch_action = "local"
+# watch_action = "download"
 #
 # [[sources]]
 # url = "https://codeberg.org/extencil"

@@ -92,6 +92,7 @@ def main(argv: list[str] | None = None) -> int:
     raw = list(sys.argv[1:] if argv is None else argv)
     commands = {
         "run",
+        "download",
         "local-mirror",
         "remote-mirror",
         "watching",
@@ -121,6 +122,10 @@ def build_parser() -> argparse.ArgumentParser:
     run = sub.add_parser("run", help="discover, back up, annotate, and mirror repositories")
     add_runtime_args(run, destination_visibility=True)
     run.set_defaults(handler=run_command)
+
+    download = sub.add_parser("download", help="download or update local source backups without pushing anywhere")
+    add_runtime_args(download, destinations=False, mode=False)
+    download.set_defaults(handler=run_command, workflow_mode="download")
 
     local = sub.add_parser("local-mirror", help="clone or update local mirrors without pushing anywhere")
     add_runtime_args(local, destinations=False, mode=False)
@@ -161,8 +166,11 @@ def add_runtime_args(
     if mode:
         parser.add_argument(
             "--mode",
-            choices=["full", "local", "remote", "watching"],
-            help="workflow mode: full clones and pushes, local only clones, remote only pushes local mirrors, watching polls sources",
+            choices=["full", "download", "local", "remote", "watching"],
+            help=(
+                "workflow mode: full mirrors and pushes, download clones working trees, "
+                "local creates local mirrors, remote pushes local mirrors, watching polls sources"
+            ),
         )
     parser.add_argument("--sources", type=Path, help="text file with one source profile URL per line")
     parser.add_argument("--source", action="append", default=[], help="source profile URL; repeatable")
@@ -201,7 +209,7 @@ def add_runtime_args(
     parser.add_argument("--watch-interval", type=int, help="default watching poll interval in seconds")
     parser.add_argument(
         "--watch-action",
-        choices=["full", "local", "remote"],
+        choices=["full", "download", "local", "remote"],
         help="watching action when a source repository changes",
     )
     parser.add_argument(
@@ -377,7 +385,7 @@ def build_config_from_args(args: argparse.Namespace, include_destinations: bool)
             if not matched:
                 print(f"WARNING: no source matched token platform {platform}", file=sys.stderr)
 
-    if include_destinations and cfg.mode != "local":
+    if include_destinations and cfg.mode not in {"download", "local"}:
         apply_destinations_file(cfg, args.destinations)
         cfg.destinations.extend(destination_from_url(url) for url in args.destination)
         destination_visibility = getattr(args, "destination_visibility", None)
