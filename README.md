@@ -497,6 +497,24 @@ agmh run \
 Multiple tokens are allowed. AGMH rotates tokens when a token is rejected, rate
 limited, or temporarily unusable.
 
+In TOML arrays, every token entry must be separated by a comma:
+
+```toml
+[github]
+tokens = [
+  { env = "GITHUB_TOKEN", name = "github-primary" },
+  { env = "GITHUB_TOKEN_2", name = "github-secondary" },
+]
+```
+
+You can also use a named token table:
+
+```toml
+[github.tokens]
+github-primary = { env = "GITHUB_TOKEN" }
+github-secondary = "env:GITHUB_TOKEN_2"
+```
+
 ## Marker File
 
 Before pushing to destinations, AGMH writes a marker file into the default

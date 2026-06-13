@@ -17,12 +17,30 @@ from .models import (
 from .utils import infer_platform, parse_owner_from_profile_url, read_lines_file, resolve_secret
 
 
+class ConfigError(ValueError):
+    pass
+
+
 def load_config(path: Path | None) -> AppConfig:
     if path is None:
         return AppConfig()
-    data = tomllib.loads(path.read_text(encoding="utf-8"))
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ConfigError(f"Cannot read config file {path}: {exc}") from exc
+
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"Invalid TOML in {path}: {exc}{_toml_error_hint(text)}") from exc
+
     base_dir = path.parent
-    return config_from_dict(data, base_dir)
+    try:
+        return config_from_dict(data, base_dir)
+    except ConfigError:
+        raise
+    except ValueError as exc:
+        raise ConfigError(f"Invalid config in {path}: {exc}") from exc
 
 
 def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppConfig:
@@ -43,7 +61,7 @@ def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppC
         api_base=str(github.get("api_base", cfg.github.api_base)),
         profiles_file=_optional_path(github.get("profiles_file"), base_dir),
         profiles=list(github.get("profiles", cfg.github.profiles)),
-        tokens=_token_list(github.get("tokens", [])),
+        tokens=_token_list(github.get("tokens", []), "github.tokens"),
     )
 
     if not cfg.github.tokens:
@@ -142,7 +160,7 @@ def _destination_from_dict(raw: dict[str, Any]) -> DestinationConfig:
         platform=platform,
         api_base=raw.get("api_base"),
         owner=owner,
-        tokens=_token_list(raw.get("tokens", [])),
+        tokens=_token_list(raw.get("tokens", []), f"destination {url} tokens"),
         visibility=str(raw.get("visibility", "mirror")),
         push_mode=str(raw.get("push_mode", "mirror")),
         create=bool(raw.get("create", True)),
@@ -152,23 +170,41 @@ def _destination_from_dict(raw: dict[str, Any]) -> DestinationConfig:
     )
 
 
-def _token_list(raw_tokens: Any) -> list[TokenCredential]:
+def _token_list(raw_tokens: Any, field_name: str) -> list[TokenCredential]:
     tokens: list[TokenCredential] = []
-    for idx, raw in enumerate(raw_tokens or []):
-        if isinstance(raw, str):
-            if raw.startswith("env:"):
-                env = raw.removeprefix("env:")
-                tokens.append(TokenCredential(resolve_secret(env=env), name=env))
-            else:
-                tokens.append(TokenCredential(raw, name=f"token-{idx + 1}"))
-            continue
-        if not isinstance(raw, dict):
-            raise ValueError(f"Invalid token entry: {raw!r}")
-        secret = resolve_secret(raw.get("value"), raw.get("env"))
-        name = str(raw.get("name") or raw.get("env") or f"token-{idx + 1}")
-        username = raw.get("username")
-        tokens.append(TokenCredential(secret=secret, name=name, username=username))
+    if raw_tokens in (None, ""):
+        return tokens
+
+    if isinstance(raw_tokens, dict):
+        if "env" in raw_tokens or "value" in raw_tokens:
+            return [_token_from_entry(raw_tokens, field_name, 0, None)]
+        return [
+            _token_from_entry(raw, field_name, idx, str(name))
+            for idx, (name, raw) in enumerate(raw_tokens.items())
+        ]
+
+    if not isinstance(raw_tokens, list):
+        raise ConfigError(f"{field_name} must be a list, a token table, or a named token table")
+
+    for idx, raw in enumerate(raw_tokens):
+        tokens.append(_token_from_entry(raw, field_name, idx, None))
     return tokens
+
+
+def _token_from_entry(raw: Any, field_name: str, idx: int, default_name: str | None) -> TokenCredential:
+    fallback_name = default_name or f"token-{idx + 1}"
+    if isinstance(raw, str):
+        if raw.startswith("env:"):
+            env = raw.removeprefix("env:")
+            return TokenCredential(resolve_secret(env=env), name=default_name or env)
+        return TokenCredential(raw, name=fallback_name)
+    if not isinstance(raw, dict):
+        raise ConfigError(f"Invalid {field_name} entry: {raw!r}")
+
+    secret = resolve_secret(raw.get("value"), raw.get("env"))
+    name = str(raw.get("name") or default_name or raw.get("env") or f"token-{idx + 1}")
+    username = raw.get("username")
+    return TokenCredential(secret=secret, name=name, username=username)
 
 
 def _default_env_tokens(envs: list[tuple[str, str]]) -> list[TokenCredential]:
@@ -235,3 +271,19 @@ def _marker_filename(value: Any) -> str:
     ):
         raise ValueError("backup.marker_filename must be a plain filename, not a path")
     return marker
+
+
+def _toml_error_hint(text: str) -> str:
+    if "tokens" not in text:
+        return ""
+    return (
+        "\n\nFor multiple github.tokens entries, use commas between array items:\n"
+        'tokens = [\n'
+        '  { env = "GITHUB_TOKEN", name = "github-primary" },\n'
+        '  { env = "GITHUB_TOKEN_2", name = "github-secondary" },\n'
+        ']\n\n'
+        "You can also use a named token table:\n"
+        "[github.tokens]\n"
+        'github-primary = { env = "GITHUB_TOKEN" }\n'
+        'github-secondary = { env = "GITHUB_TOKEN_2" }'
+    )

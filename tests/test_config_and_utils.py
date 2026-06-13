@@ -7,8 +7,10 @@ import unittest
 from pathlib import Path
 
 from anti_gh_ms_hysteria.config import (
+    ConfigError,
     config_from_dict,
     destination_from_url,
+    load_config,
     parse_cli_token,
     parse_destination_token,
 )
@@ -128,6 +130,51 @@ class ConfigTests(unittest.TestCase):
         self.assertTrue(cfg.insecure_tls)
         self.assertEqual(cfg.github.tokens[0].secret, "gh-secret")
         self.assertEqual(cfg.destinations[0].platform, "forgejo")
+
+    def test_github_tokens_accept_named_table(self) -> None:
+        os.environ["AGHM_GH_1"] = "gh-secret-1"
+        os.environ["AGHM_GH_2"] = "gh-secret-2"
+        cfg = config_from_dict(
+            {
+                "github": {
+                    "tokens": {
+                        "github-primary": {"env": "AGHM_GH_1"},
+                        "github-secondary": "env:AGHM_GH_2",
+                    }
+                }
+            },
+            Path.cwd(),
+        )
+        self.assertEqual(
+            [token.name for token in cfg.github.tokens],
+            ["github-primary", "github-secondary"],
+        )
+        self.assertEqual(
+            [token.secret for token in cfg.github.tokens],
+            ["gh-secret-1", "gh-secret-2"],
+        )
+
+    def test_invalid_toml_token_array_reports_helpful_config_error(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "aghm.config.toml"
+            path.write_text(
+                "\n".join(
+                    [
+                        "[github]",
+                        "tokens = [",
+                        '  { env = "GITHUB_TOKEN", name = "github-primary" }',
+                        '  { env = "GITHUB_TOKEN_2", name = "github-secondary" }',
+                        "]",
+                    ]
+                ),
+                encoding="utf-8",
+            )
+            with self.assertRaises(ConfigError) as raised:
+                load_config(path)
+        message = str(raised.exception)
+        self.assertIn("Invalid TOML", message)
+        self.assertIn("github.tokens", message)
+        self.assertIn("commas", message)
 
     def test_config_expands_user_paths(self) -> None:
         cfg = config_from_dict({"workspace": "~/agmh-state"}, Path.cwd())

@@ -7,6 +7,7 @@ from pathlib import Path
 
 from .models import AppConfig
 from .config import (
+    ConfigError,
     apply_destinations_file,
     apply_profile_file,
     destination_from_url,
@@ -56,7 +57,11 @@ def main(argv: list[str] | None = None) -> int:
     if not raw or raw[0] not in commands:
         raw = ["run", *raw]
     args = parser.parse_args(raw)
-    return args.handler(args)
+    try:
+        return args.handler(args)
+    except ConfigError as exc:
+        print(f"Configuration error: {exc}", file=sys.stderr)
+        return 2
 
 
 def build_parser() -> argparse.ArgumentParser:
