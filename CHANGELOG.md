@@ -5,6 +5,13 @@ All notable project changes should be documented in this file.
 This project uses human-readable release notes grouped by version. Dates use
 `YYYY-MM-DD`.
 
+## [0.3.0](https://github.com/haltman-io/agmh/compare/v0.2.0...v0.3.0) (2026-06-13)
+
+
+### Features
+
+* update documentation and templates for improved clarity and usability ([78320e7](https://github.com/haltman-io/agmh/commit/78320e73e93042ce1c7603d1d0ad2b4a6a4cad3c))
+
 ## [0.2.0](https://github.com/haltman-io/agmh/compare/v0.1.0...v0.2.0) (2026-06-13)
 
 
