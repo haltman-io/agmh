@@ -12,6 +12,10 @@ This project uses human-readable release notes grouped by version. Dates use
 - Security reporting policy.
 - Contribution and support guidelines.
 - Project maintenance files and GitHub issue/PR templates.
+- PyPI/TestPyPI publishing workflows using Trusted Publishing.
+- Release Please configuration for automated version bumps, changelog updates,
+  Git tags, and GitHub Releases.
+- CI workflow for Python tests and distribution checks.
 
 ### Changed
 
@@ -30,4 +34,3 @@ This project uses human-readable release notes grouped by version. Dates use
   SourceHut.
 - Optional marker commits before remote mirrors.
 - Optional webhook notifications for generic endpoints, Discord, and Telegram.
-

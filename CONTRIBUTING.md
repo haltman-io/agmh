@@ -28,6 +28,8 @@ Run these before sending changes:
 ```bash
 python -m compileall -q src tests
 PYTHONPATH=src python -m unittest discover -s tests -v
+python -m build
+python -m twine check --strict dist/*
 python -m pip install -e . --dry-run --no-deps
 ```
 
@@ -40,9 +42,14 @@ python -m pip install -e . --dry-run --no-deps
 - Add focused tests for behavior changes.
 - Update `README.md`, `config.example.toml`, and `CHANGELOG.md` when user-facing
   behavior changes.
+- Use Conventional Commit messages so Release Please can generate releases and
+  changelog entries.
 
 ## Security Issues
 
 Do not report security issues through public issues or pull requests. Follow
 `SECURITY.md`.
 
+## Releases
+
+See `RELEASING.md`.
