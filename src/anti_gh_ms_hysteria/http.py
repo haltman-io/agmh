@@ -9,6 +9,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
+from . import __version__
 from .models import RetryConfig, TokenCredential
 from .tokens import TokenPool
 from .ui import UI
@@ -40,7 +41,7 @@ class ApiClient:
         auth_style: str = "bearer",
         proxy: str | None = None,
         insecure_tls: bool = False,
-        user_agent: str = "anti-GH-MS-hysteria/0.1",
+        user_agent: str | None = None,
     ):
         self.base_url = base_url.rstrip("/")
         self.token_pool = token_pool
@@ -49,7 +50,7 @@ class ApiClient:
         self.auth_style = auth_style
         self.proxy = proxy
         self.insecure_tls = insecure_tls
-        self.user_agent = user_agent
+        self.user_agent = user_agent or f"agmh/{__version__}"
         self.opener = self._build_opener(proxy, insecure_tls)
 
     def request_json(

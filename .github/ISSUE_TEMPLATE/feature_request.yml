@@ -1,0 +1,41 @@
+name: Feature request
+description: Suggest a focused AGMH improvement.
+title: "[Feature]: "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What workflow is hard or missing?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposal
+      description: What should AGMH do?
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - sources
+        - destinations
+        - local mirror
+        - remote mirror
+        - watching
+        - notifications
+        - packaging
+        - documentation
+  - type: textarea
+    id: notes
+    attributes:
+      label: Additional context
+

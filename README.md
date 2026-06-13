@@ -3,21 +3,22 @@
 ![License: Unlicense](https://img.shields.io/badge/license-Unlicense-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11%2B-3776ab.svg)
 ![CLI](https://img.shields.io/badge/interface-CLI%20%2B%20TUI-111111.svg)
-![GitHub](https://img.shields.io/badge/source-GitHub-181717.svg)
-![GitLab](https://img.shields.io/badge/destination-GitLab-fc6d26.svg)
-![Codeberg](https://img.shields.io/badge/destination-Codeberg-2185d0.svg)
-![SourceHut](https://img.shields.io/badge/destination-SourceHut-000000.svg)
+![Sources](https://img.shields.io/badge/sources-GitHub%20%7C%20GitLab%20%7C%20Forgejo%20%7C%20Bitbucket%20%7C%20SourceHut-111111.svg)
+![Destinations](https://img.shields.io/badge/destinations-GitHub%20%7C%20GitLab%20%7C%20Forgejo%20%7C%20Bitbucket%20%7C%20SourceHut-111111.svg)
 
 AGMH means **ANTI GITHUB & MICROSOFT HYSTERIA**.
 
-AGMH is a local backup and repository mirroring CLI built to help researchers,
-maintainers, and software teams pull their work out of GitHub quickly and push
-it to other forges without losing years of history, branches, tags, or research.
+Repository: [haltman-io/agmh](https://github.com/haltman-io/agmh)
 
-It discovers repositories from GitHub profiles or organizations, clones them
-locally as mirrors, adds a small provenance marker file, creates matching
-repositories on destination platforms, and pushes the backup to GitLab,
-Codeberg/Forgejo, SourceHut, Bitbucket, or compatible Git remotes.
+AGMH is a local backup and repository mirroring CLI built to help researchers,
+maintainers, and software teams pull their work out of a forge quickly and push
+it to another forge without losing years of history, branches, tags, or research.
+
+It discovers repositories from supported source profiles, organizations, groups,
+namespaces, or workspaces; clones them locally as mirrors; adds a small
+provenance marker file; creates matching repositories on destination platforms;
+and pushes the backup to GitHub, GitLab, Codeberg/Forgejo, SourceHut,
+Bitbucket, or compatible Git remotes.
 
 The primary CLI command is:
 
@@ -25,78 +26,91 @@ The primary CLI command is:
 agmh
 ```
 
-The older `aghm` alias still works for compatibility.
+The legacy typo `aghm` was removed. AGMH intentionally uses `agmh` for commands,
+default config files, state directories, logs, and generated marker files.
 
 ## Project Statement
 
-This tool exists because people need a fast, practical way to remove their work
-from a platform before a platform removes them.
+This tool exists because important work should not depend on a single platform
+remaining available, cooperative, or operational forever.
 
-AGMH was built in the context of a ban-wave against security researchers and the
-public conflict around MSRC, the Microsoft Security Response Center, and the
-researchers behind:
+AGMH was built after past platform access incidents made us reassess the risk of
+being locked out of a large technology platform without enough time to preserve
+our work or coordinate with the people closest to a project. The risk is similar
+to an abrupt offboarding process where access is disabled so quickly that a
+person cannot even send a final email to close colleagues.
 
-- https://x.com/ChaoticEclipse0
-- https://x.com/xploitrsturtle2
+For software projects, that access risk is broader than any single account or
+provider. A team can lose continuity because of enforcement actions, sanctions,
+provider policy changes, operational outages, service degradation, acquisition
+risk, or a platform eventually disappearing. The critical issue is
+centralization: if repository history, issues, branches, tags, release metadata,
+and collaboration context all live in one place, a disruption in that place can
+have a large impact on the surrounding ecosystem.
 
-The position of this project is explicit: when a centralized development
-platform adopts policies that can be used to repress security researchers
-because triagers, vendors, or corporate response teams had their egos bruised,
-researchers need escape tools. If the people responsible for keeping software
-secure had done their job, the ecosystem would not be in this situation.
+This is not a personal fight with GitHub. It is a risk-management and business
+continuity problem. AGMH provides a practical way to keep local mirrors, move
+repositories between forges, preserve Git history, and maintain high
+availability of project information when a centralized platform becomes
+unavailable or unsuitable.
 
-This is not a personal fight with GitHub. It is a practical statement that
-people must have the right and the ability to remove their own work from GitHub
-and move it elsewhere before they lose years of research, tooling, issue
-history, public contributions, branches, tags, and project continuity.
-
-AGMH was produced by **Haltman.IO** as a peaceful protest and as a practical
-tool. It was not produced by `@extencil`, but by the same group he is part of,
-and it is released freely so others can protect their own work.
+AGMH is produced by **Haltman.IO** and released freely so others can protect
+their own work.
 
 This tool has already been used to back up repositories from `@extencil` and
 `@haltman-io` to GitLab, Codeberg, and SourceHut successfully.
 
-This may be the last Haltman.IO project released on this shameful platform,
-which in the view of this project has adopted a policy of repression against
-security researchers because two of them hurt the ego of MSRC triagers.
+## Continuity Incident Timeline
 
-## Public Mirrors And Accounts
-
-AGMH was used to move the work of `@extencil` and `@haltman-io` away from
-GitHub and into independent mirrors.
-
-Extencil mirrors:
+AGMH was used to move the work of `@extencil` and `@haltman-io` away from a
+single forge dependency and into independent mirrors:
 
 - GitLab: https://gitlab.com/extencil
 - Codeberg: https://codeberg.org/extencil
 - SourceHut: https://git.sr.ht/~extencil
-
-Haltman.IO mirrors:
-
 - GitLab: https://gitlab.com/haltman-io
 - Codeberg: https://codeberg.org/haltman
 
-Extencil also uses X, where he exposed the case around his ban:
+The account access incident that reinforced this risk model followed this
+timeline:
 
-- X profile: https://x.com/extencil
-- Ban case statement: https://x.com/extencil/status/2065150696937115988
-
-Extencil public links:
-
-| Network | Link |
+| Event | Time |
 | --- | --- |
-| ORCID | https://orcid.org/0009-0007-0914-3920 |
-| Email | extencil@proton.thc.org, extencil@segfault.net, extencil@haltman.io, extencil@haltman.org, extencil@metasploit.io, extencil@lockbit.io, extencil@polkit.org |
-| Telegram | https://t.me/extencil |
-| Discord | `@extencil` |
-| Signal | `@extencil.01` |
-| Bluesky | https://bsky.app/profile/extencil.me |
-| Mastodon | https://mastodon.social/@extencil |
-| GitHub | ~~https://github.com/extencil~~ - taken down by Microslop |
-| Reddit | https://reddit.com/user/extencil |
-| GitLab | https://gitlab.com/extencil |
-| YouTube | https://youtube.com/@extencil-thc |
+| Account suspended/banned by platform enforcement | Monday, 2026-06-08, around 04:00 `America/Sao_Paulo` (`UTC-03:00`), approximately 2026-06-08 07:00 UTC |
+| Review ticket opened | 2026-06-08 07:59 UTC, 2026-06-08 04:59 `America/Sao_Paulo` |
+| Priority follow-up sent by our side | 2026-06-11 16:47 UTC, 2026-06-11 13:47 `America/Sao_Paulo` |
+| Case reviewed and reverted by GitHub | 2026-06-12 11:19 UTC, 2026-06-12 08:19 `America/Sao_Paulo` |
+
+The incident would have been significantly more damaging without continuity
+procedures already in place. When Haltman.IO created its GitHub organization,
+other Haltman.IO members were assigned as organization owners. That avoided a
+complete lockout scenario.
+
+Someone who is not part of an organization, or who is not an organization owner
+or repository administrator, cannot reliably operate that organization. They
+cannot recover organization-level access, manage owners and teams, change
+organization settings, manage repository permissions, configure secrets,
+webhooks, deploy keys, branch protection, or security settings, create or
+transfer repositories, publish releases, or consistently triage and merge work
+across the organization.
+
+This matters because the affected work is operational, not cosmetic. Haltman.IO
+voluntarily sustains email-forwarding infrastructure associated with The
+Hacker's Choice, in collaboration with Phrack, Eurocompton, team-teso, Antisec,
+pwnbuffer, and other groups connected to cybersecurity research. A complete
+organization lockout would have affected the ability to manage the many
+repositories behind that email-forwarding stack.
+
+That impact is not about minor product changes or visual polish. It affects the
+ability to coordinate proper vulnerability disclosure for people who self-host
+the email-forwarding stack, publish fixes, document operational changes, and
+credit researchers correctly when they report vulnerabilities.
+
+It also affects our internal service expectations. There is no legal or
+commercial SLA: we do not sell this work, and the output is public work for the
+public. Still, we prefer to respond to issues and pull requests quickly. Acting
+like a large platform with effectively unbounded response times is neither our
+role nor consistent with Haltman.IO's operating values.
 
 ## Haltman.IO
 
@@ -132,18 +146,20 @@ Haltman.IO links:
 
 AGMH can:
 
-- Read GitHub profile or organization URLs from a text file.
-- Discover accessible public and private GitHub repositories.
-- Use one or more GitHub tokens to increase API limits and access private repos.
+- Read source profile, organization, group, namespace, or workspace URLs from a text file.
+- Discover accessible public and private repositories from GitHub, GitLab, Forgejo/Gitea, Bitbucket, and SourceHut.
+- Use one or more source tokens to increase API limits and access private repos.
 - Rotate tokens when rate limits or authorization failures happen.
 - Clone each repository locally using `git clone --mirror`.
+- Run in local-only mode to download/update mirrors without pushing anywhere.
+- Run in remote-only mode to push existing local mirrors to configured destinations later.
 - Keep a local backup under `backups/` by default.
-- Add `anti-gh-ms-hysteria.txt` to the default branch before mirroring.
+- Add `agmh.txt` to the default branch before mirroring.
 - Create destination repositories through platform APIs.
 - Preserve repository name and public/private visibility where supported.
-- Push mirrors to GitLab, Codeberg/Forgejo, SourceHut, Bitbucket, and similar Git destinations.
-- Use resumable state in `.aghm/state.json`.
-- Write detailed logs to `.aghm/logs/`.
+- Push mirrors to GitHub, GitLab, Codeberg/Forgejo, SourceHut, Bitbucket, and similar Git destinations.
+- Use resumable state in `.agmh/state.json`.
+- Write detailed logs to `.agmh/logs/`.
 - Run dry-run simulations.
 - Use proxies.
 - Disable TLS verification when needed for intercepting proxies.
@@ -152,12 +168,22 @@ AGMH can:
 
 ## Supported Platforms
 
-AGMH currently treats GitHub as the source platform.
+Source support:
+
+| Platform | Discovery scope | Private repos | Notes |
+| --- | --- | --- | --- |
+| GitHub | User or organization | Yes, with token | Uses GitHub REST repositories API. GitHub Enterprise can use `api_base`. |
+| GitLab | User, group, or subgroup | Yes, with token | Group discovery includes subgroups. `internal` repositories are treated as non-public when mirrored elsewhere. |
+| Codeberg | User or organization | Yes, with token | Uses the Forgejo adapter. |
+| Forgejo/Gitea | User or organization | Yes, with token | Works with compatible `/api/v1` instances. |
+| Bitbucket | Workspace | Yes, with token | Uses Bitbucket Cloud workspaces and repository pagination. |
+| SourceHut | User | Yes, with token | Uses the git.sr.ht GraphQL API. `unlisted` visibility is preserved when the destination supports it. |
 
 Destination support:
 
 | Platform | API create | HTTPS push | SSH push | Notes |
 | --- | --- | --- | --- | --- |
+| GitHub | Yes | Yes | Possible with custom URL | Use a destination token with repo creation and push permissions. GitHub Enterprise can use `api_base`. |
 | GitLab | Yes | Yes | Possible with custom URL | Hidden repo names such as `.github` are mapped to valid GitLab paths such as `dot-github`. |
 | Codeberg | Yes | Yes | Possible with custom URL | Uses Forgejo API. GitHub `refs/pull/*` refs are excluded in portable mirror mode because Codeberg rejects hidden refs. |
 | Forgejo/Gitea | Yes | Yes | Possible with custom URL | Same adapter family as Codeberg. |
@@ -168,18 +194,37 @@ Destination support:
 
 - Python 3.11 or newer.
 - Git available in `PATH`.
-- Network access to GitHub and destination forges.
+- Network access to source and destination forges.
 - Destination accounts and tokens with enough permission to create repositories and push Git refs.
 - Optional: `git-lfs` if you enable `lfs = true`.
 - Optional: `ssh-agent` and SSH keys for SourceHut or SSH-based destinations.
+
+Ubuntu system packages:
+
+```bash
+sudo apt update
+sudo apt install -y python3 python3-venv python3-pip git ca-certificates openssh-client
+```
+
+Optional packages:
+
+```bash
+sudo apt install -y git-lfs curl
+```
+
+Notes:
+
+- `git-lfs` is only required when AGMH is configured with `lfs = true`.
+- `curl` is used only for the troubleshooting and proxy test commands shown in this README.
+- If your Ubuntu release provides Python older than 3.11, install Python 3.11 or newer before creating the virtual environment.
 
 ## Installation
 
 Clone the repository:
 
 ```bash
-git clone https://github.com/<owner>/anti-GS-MS-hysteria.git
-cd anti-GS-MS-hysteria
+git clone https://github.com/haltman-io/agmh.git
+cd agmh
 ```
 
 Create a virtual environment:
@@ -203,14 +248,6 @@ agmh --help
 agmh run --help
 ```
 
-Compatibility aliases:
-
-```bash
-aghm --help
-anti-gh-ms-hysteria --help
-python -m anti_gh_ms_hysteria --help
-```
-
 If you do not install the package, you can run it with `PYTHONPATH`:
 
 ```bash
@@ -225,11 +262,11 @@ Create a starter config:
 cp config.example.toml agmh.config.toml
 ```
 
-Create `targets.txt` from the public-safe example:
+Create `sources.txt` from the public-safe example:
 
 ```bash
-cp targets.example.txt targets.txt
-$EDITOR targets.txt
+cp sources.example.txt sources.txt
+$EDITOR sources.txt
 ```
 
 If you prefer to keep destinations in a separate file instead of inline TOML,
@@ -244,6 +281,7 @@ Export tokens:
 
 ```bash
 export GITHUB_TOKEN="github_token_here"
+export GITHUB_DEST_TOKEN="github_destination_token_here"
 export GITLAB_TOKEN="gitlab_token_here"
 export CODEBERG_TOKEN="codeberg_token_here"
 export SOURCEHUT_TOKEN="sourcehut_token_here"
@@ -267,14 +305,149 @@ Check state:
 agmh state --config agmh.config.toml
 ```
 
+## Workflow Modes
+
+Default full workflow:
+
+```bash
+agmh run --config agmh.config.toml --verbose
+```
+
+This discovers source repositories, clones or updates local mirrors, adds the
+marker commit when `backup.marker_enabled` is true, creates destination
+repositories, and pushes mirrors.
+
+Local mirror only:
+
+```bash
+agmh local-mirror --config agmh.config.toml --verbose
+```
+
+Equivalent:
+
+```bash
+agmh run --config agmh.config.toml --mode local --verbose
+```
+
+This discovers source repositories and only clones or updates local bare mirrors
+under `backup.local_dir`. It does not create marker commits and does not contact
+destination forges, even if destinations are present in the config.
+
+Remote mirror from existing local mirrors:
+
+```bash
+agmh remote-mirror --config agmh.config.toml --verbose
+```
+
+Equivalent:
+
+```bash
+agmh run --config agmh.config.toml --mode remote --verbose
+```
+
+This does not discover or clone from source forges. It reads mirrors recorded in
+`.agmh/state.json`, falls back to scanning `backup.local_dir`, adds the marker
+commit if enabled and needed, creates destination repositories, and pushes the
+local mirrors.
+When AGMH has to scan local mirrors without state metadata, repository privacy is
+unknown, so it treats those repositories as private by default.
+
+By default, remote mirror follows the source repository visibility. You can
+override destination visibility for the whole remote mirror run:
+
+```bash
+agmh remote-mirror --config agmh.config.toml --destination-visibility mirror
+agmh remote-mirror --config agmh.config.toml --destination-visibility public
+agmh remote-mirror --config agmh.config.toml --destination-visibility private
+```
+
+`mirror` applies the same visibility recorded from the source. `public` creates
+destination repositories as public regardless of source visibility. `private`
+creates destination repositories as private regardless of source visibility. If
+a destination repository already exists, AGMH uses the existing repository as-is.
+The same override is available with `agmh run --mode remote`.
+
+Watching mode:
+
+```bash
+agmh watching --config agmh.config.toml --verbose
+```
+
+Equivalent:
+
+```bash
+agmh run --config agmh.config.toml --mode watching --verbose
+```
+
+Watching mode runs until interrupted. It polls enabled sources, compares the
+current source metadata with `.agmh/state.json`, and runs the configured action
+only for first-seen or changed repositories. The default action is `full`.
+The change fingerprint uses source API update fields such as GitHub `pushed_at`,
+GitLab `last_activity_at`, Forgejo `updated_at`, Bitbucket `updated_on`, and
+SourceHut `updated`. GitLab documents that `last_activity_at` can lag by up to
+one hour, so GitLab polling is eventually consistent rather than instant.
+
+Watching actions:
+
+| Action | Behavior |
+| --- | --- |
+| `full` | Clone/update the local mirror, ensure the marker when enabled, create destinations, and push. |
+| `local` | Clone/update the local mirror only. |
+| `remote` | Push an existing local mirror for the changed repository. If the local mirror is missing, the action fails for that repository. |
+
+Configure polling globally:
+
+```toml
+[watch]
+interval_seconds = 300
+action = "full"       # full, local, or remote
+initial_run = true    # process repositories the first time they are seen
+once = false          # useful for tests or supervised one-shot runs
+```
+
+Override polling per source:
+
+```toml
+[[sources]]
+url = "https://gitlab.com/haltman-io"
+platform = "gitlab"
+tokens = [{ env = "GITLAB_SOURCE_TOKEN" }]
+watch = true
+watch_interval_seconds = 120
+watch_action = "local"
+```
+
+CLI overrides:
+
+```bash
+agmh watching \
+  --config agmh.config.toml \
+  --watch-interval 120 \
+  --watch-action full
+```
+
+Use `--no-watch-initial-run` when you want AGMH to record the current state
+without processing existing repositories on the first polling cycle. Use
+`--watch-once` to run one polling cycle and exit.
+
+You can also set the mode in TOML:
+
+```toml
+mode = "full"   # full, local, remote, or watching
+```
+
 ## Input Files
 
-AGMH reads source profiles from a plain text file. One GitHub profile or
-organization URL per line:
+AGMH reads source profiles from a plain text file. Use one profile,
+organization, group, namespace, or workspace URL per line:
 
 ```txt
 https://github.com/extencil/
 https://github.com/haltman-io/
+https://gitlab.com/haltman-io/
+https://codeberg.org/haltman/
+https://bitbucket.org/example-workspace/
+https://git.sr.ht/~extencil/
 ```
 
 Blank lines and lines beginning with `#` are ignored.
@@ -284,6 +457,9 @@ You can also pass source profiles directly:
 ```bash
 agmh run --source https://github.com/extencil/ --source https://github.com/haltman-io/
 ```
+
+For private non-GitHub sources, prefer inline `[[sources]]` entries so each
+source can declare its own `tokens` and `api_base`.
 
 Destinations can be configured in TOML or in a plain text file:
 
@@ -296,18 +472,54 @@ https://git.sr.ht/~extencil
 ## Full Configuration Example
 
 ```toml
-workspace = ".aghm"
+workspace = ".agmh"
+mode = "full"
 dry_run = false
 verbose = 0
 tui = true
 insecure_tls = false
+sources_file = "sources.txt"
 
 [github]
-profiles_file = "targets.txt"
 tokens = [
   { env = "GITHUB_TOKEN", name = "github-primary" },
   # { env = "GITHUB_TOKEN_2", name = "github-secondary" },
 ]
+
+[watch]
+interval_seconds = 300
+action = "full"
+initial_run = true
+once = false
+
+[notifications]
+enabled = false
+events = ["*"]
+fail_silently = true
+timeout_seconds = 10
+
+# [[webhooks]]
+# name = "ops-discord"
+# platform = "discord"
+# url_env = "DISCORD_WEBHOOK_URL"
+# events = ["start", "finish", "error", "local_saved", "remote_saved", "watch_check", "watch_update", "watch_none"]
+# username = "AGMH"
+#
+# [[webhooks]]
+# name = "ops-telegram"
+# platform = "telegram"
+# bot_token_env = "TELEGRAM_BOT_TOKEN"
+# chat_id_env = "TELEGRAM_CHAT_ID"
+# events = ["start", "finish", "error", "watch_update"]
+# parse_mode = "HTML"
+
+# Inline sources are useful when a non-GitHub source needs a token or api_base.
+[[sources]]
+url = "https://gitlab.com/haltman-io"
+platform = "gitlab"
+tokens = [{ env = "GITLAB_SOURCE_TOKEN", name = "gitlab-source" }]
+watch_interval_seconds = 120
+watch_action = "local"
 
 [backup]
 local_dir = "backups"
@@ -316,6 +528,7 @@ include_archived = true
 include_forks = true
 include_private_for_authenticated_user = true
 lfs = false
+marker_enabled = true
 push_mode = "mirror"
 
 [retry]
@@ -327,14 +540,21 @@ rate_limit_sleep_seconds = 300
 wait_on_rate_limit = true
 
 [git]
-author_name = "root"
-author_email = "root@haltman.io"
-commit_message = "Add AGMH backup marker"
+author_name = "extencil"
+author_email = "extencil@segfault.net"
+commit_message = "Backuping with AGMH v{version}"
 # ssh_identity_file = "/home/user/.ssh/sourcehut_ed25519"
 # ssh_identities_only = true
 # ssh_batch_mode = false
 # ssh_strict_host_key_checking = "accept-new"
 # ssh_command = "ssh -i /home/user/.ssh/sourcehut_ed25519 -o IdentitiesOnly=yes"
+
+[[destinations]]
+url = "https://github.com/haltman-io-mirror"
+platform = "github"
+tokens = [{ env = "GITHUB_DEST_TOKEN", name = "github-destination" }]
+visibility = "mirror"
+push_mode = "mirror"
 
 [[destinations]]
 url = "https://gitlab.com/haltman-io"
@@ -365,35 +585,60 @@ Top-level options:
 
 | Key | Meaning |
 | --- | --- |
-| `workspace` | Local state and logs directory. Default: `.aghm`. |
+| `mode` | Workflow mode: `full`, `local`, `remote`, or `watching`. Default: `full`. |
+| `workspace` | Local state and logs directory. Default: `.agmh`. |
 | `dry_run` | Plan actions without cloning, creating, or pushing. |
 | `verbose` | Default verbosity level. CLI `-v` can override it. |
 | `tui` | Use Rich console rendering when installed. |
 | `proxy` | Optional HTTP/HTTPS proxy URL. |
 | `insecure_tls` | Disable TLS certificate verification for API calls and Git HTTPS operations. |
-| `resume` | Reuse `.aghm/state.json` and skip completed steps. |
+| `resume` | Reuse `.agmh/state.json` and skip completed steps. |
 | `force` | Redo steps even if state says they are complete. |
+| `sources_file` | Text file containing source profile/org/group/workspace URLs. |
 
-GitHub options:
+GitHub source shortcut options:
 
 | Key | Meaning |
 | --- | --- |
 | `api_base` | GitHub API base URL. Default: `https://api.github.com`. |
-| `profiles_file` | Text file containing source GitHub profile/org URLs. |
-| `profiles` | Inline list of source GitHub profile/org URLs. |
-| `tokens` | List of token entries. Use `env` instead of hardcoding secrets. |
+| `profiles_file` | Text file containing GitHub source profile/org URLs. Prefer top-level `sources_file` for mixed providers. |
+| `profiles` | Inline list of GitHub source profile/org URLs. Prefer `[[sources]]` for mixed providers. |
+| `tokens` | GitHub source token entries. These are also attached to GitHub URLs read from `sources_file`. |
+
+Source options:
+
+| Key | Meaning |
+| --- | --- |
+| `url` | Source profile, org, group, namespace, or workspace URL. |
+| `platform` | `github`, `gitlab`, `forgejo`, `sourcehut`, or `bitbucket`. Usually inferred from `url`. |
+| `api_base` | Optional API override for self-hosted or enterprise instances. |
+| `owner` | Optional owner/namespace/workspace override. |
+| `tokens` | Source API and HTTPS clone tokens. Use `env` instead of hardcoding secrets. |
+| `watch` | Enable or disable this source in watching mode. Default: `true`. |
+| `watch_interval_seconds` | Per-source polling interval override. |
+| `watch_action` | Per-source action override: `full`, `local`, or `remote`. |
+
+Watch options:
+
+| Key | Meaning |
+| --- | --- |
+| `interval_seconds` | Default polling interval for sources in watching mode. |
+| `action` | Default action for changed repositories: `full`, `local`, or `remote`. |
+| `initial_run` | Process repositories the first time they are seen. If `false`, AGMH records current fingerprints and waits for later changes. |
+| `once` | Run one polling cycle and exit. Mainly useful for tests, cron-like runs, or supervised debugging. |
 
 Backup options:
 
 | Key | Meaning |
 | --- | --- |
 | `local_dir` | Local mirror storage directory. |
-| `clone_protocol` | `https` or `ssh` for GitHub clone URLs. |
+| `clone_protocol` | `https` or `ssh` for source clone URLs. |
 | `include_archived` | Include archived repositories. |
 | `include_forks` | Include forked repositories. |
-| `include_private_for_authenticated_user` | When the token belongs to the target user, include private repositories. |
+| `include_private_for_authenticated_user` | When the token belongs to the source user, include private repositories. |
 | `lfs` | Run `git lfs fetch --all` after mirror updates. |
-| `marker_filename` | Marker file name. Default: `anti-gh-ms-hysteria.txt`. |
+| `marker_enabled` | Write a provenance marker commit before remote mirrors. Default: `true`. Set to `false` to avoid modifying mirrored repositories. |
+| `marker_filename` | Marker file name. Default: `agmh.txt`. |
 | `push_mode` | `mirror`, `portable-mirror`, `all`, or `default`. |
 
 Retry options:
@@ -413,7 +658,7 @@ Git options:
 | --- | --- |
 | `author_name` | Git author name for marker commits. |
 | `author_email` | Git author email for marker commits. |
-| `commit_message` | Commit message for the marker commit. |
+| `commit_message` | Commit message for the marker commit. Supports `{version}`. Default: `Backuping with AGMH v{version}`. |
 | `ssh_identity_file` | Private key for Git SSH operations. |
 | `ssh_command` | Full `GIT_SSH_COMMAND` override. |
 | `ssh_identities_only` | Add `-o IdentitiesOnly=yes` when using `ssh_identity_file`. |
@@ -425,7 +670,7 @@ Destination options:
 | Key | Meaning |
 | --- | --- |
 | `url` | Destination account, group, org, or namespace URL. |
-| `platform` | `gitlab`, `forgejo`, `sourcehut`, or `bitbucket`. |
+| `platform` | `github`, `gitlab`, `forgejo`, `sourcehut`, or `bitbucket`. |
 | `api_base` | Optional API override for self-hosted instances. |
 | `owner` | Optional owner/namespace override. |
 | `tokens` | Destination API/Git tokens. |
@@ -436,6 +681,83 @@ Destination options:
 | `git_username` | Username for HTTPS Git push URLs. |
 | `push_url_template` | Custom push URL, for example SourceHut SSH. |
 
+Notification options:
+
+| Key | Meaning |
+| --- | --- |
+| `enabled` | Enable webhook notifications. Default: `false`. |
+| `events` | Global event filter. Use `["*"]` for all enabled events. |
+| `fail_silently` | Log webhook delivery errors instead of failing the workflow. Default: `true`. |
+| `timeout_seconds` | HTTP timeout for webhook delivery. |
+
+Supported notification events:
+
+| Event | When it fires |
+| --- | --- |
+| `start` | Workflow starts, with a sanitized config snapshot. |
+| `finish` | Workflow finishes, with exit code. |
+| `local_saved` | A repository mirror was cloned or updated locally. |
+| `remote_saved` | A repository was pushed to a destination. |
+| `watch_check` | Watching mode starts checking a source for updates. |
+| `watch_update` | Watching mode found a changed or first-seen repository and includes the next action. |
+| `watch_none` | Watching mode found no updates and includes the next polling interval. |
+| `error` | A source discovery, clone, marker, create, push, or workflow error happened. |
+
+Webhook options:
+
+| Key | Meaning |
+| --- | --- |
+| `name` | Human-readable webhook name used in local warnings. |
+| `platform` | `generic`, `discord`, or `telegram`. |
+| `enabled` | Per-webhook enable switch. Default: `true`. |
+| `events` | Per-webhook event filter. Use `["*"]` for all events allowed globally. |
+| `url` / `url_env` | Generic or Discord webhook URL. Prefer `url_env`. |
+| `headers` | Extra headers for generic webhooks. |
+| `username` | Discord webhook username override. |
+| `avatar_url` | Discord webhook avatar override. |
+| `thread_id` | Discord forum/thread selector query parameter. |
+| `bot_token` / `bot_token_env` | Telegram bot token. Prefer `bot_token_env`. |
+| `chat_id` / `chat_id_env` | Telegram chat ID. |
+| `api_base` | Telegram API base URL. Default: `https://api.telegram.org`. |
+| `parse_mode` | Telegram parse mode, for example `HTML`. |
+| `message_thread_id` | Telegram forum topic ID. |
+| `disable_web_page_preview` | Telegram link preview switch. Default: `true`. |
+
+Example webhooks:
+
+```toml
+[notifications]
+enabled = true
+events = ["*"]
+fail_silently = true
+
+[[webhooks]]
+name = "ops-discord"
+platform = "discord"
+url_env = "DISCORD_WEBHOOK_URL"
+events = ["start", "finish", "error", "local_saved", "remote_saved", "watch_update"]
+username = "AGMH"
+
+[[webhooks]]
+name = "ops-telegram"
+platform = "telegram"
+bot_token_env = "TELEGRAM_BOT_TOKEN"
+chat_id_env = "TELEGRAM_CHAT_ID"
+events = ["error", "watch_update", "watch_none"]
+parse_mode = "HTML"
+
+[[webhooks]]
+name = "ops-generic"
+platform = "generic"
+url_env = "AGMH_WEBHOOK_URL"
+events = ["*"]
+```
+
+Webhook notifications never include token values, webhook URLs, Telegram bot
+tokens, or destination push URLs containing credentials. The `start` event
+includes sources, destinations, modes, counts, and other operational settings
+from a sanitized config snapshot.
+
 ## Tokens
 
 Use environment variables. Do not hardcode tokens into config files committed to
@@ -445,6 +767,12 @@ GitHub:
 
 ```bash
 export GITHUB_TOKEN="..."
+```
+
+GitHub destination:
+
+```bash
+export GITHUB_DEST_TOKEN="..."
 ```
 
 GitLab:
@@ -465,26 +793,59 @@ SourceHut:
 export SOURCEHUT_TOKEN="..."
 ```
 
+Webhooks:
+
+```bash
+export DISCORD_WEBHOOK_URL="..."
+export TELEGRAM_BOT_TOKEN="..."
+export TELEGRAM_CHAT_ID="..."
+export AGMH_WEBHOOK_URL="..."
+```
+
 You can pass extra tokens from the CLI:
 
 ```bash
 agmh run \
   --source https://github.com/haltman-io/ \
   --github-token env:GITHUB_TOKEN \
+  --source-token gitlab:env:GITLAB_SOURCE_TOKEN \
   --destination https://gitlab.com/haltman-io \
   --destination-token gitlab:env:GITLAB_TOKEN
 ```
 
+Use `--github-token` as a shortcut for GitHub sources. Use `--source-token platform:...`
+for other source providers, for example `gitlab:env:GITLAB_TOKEN`,
+`forgejo:env:CODEBERG_TOKEN`, `bitbucket:env:BITBUCKET_TOKEN`,
+`bitbucket:you@example.com:env:BITBUCKET_TOKEN`, or `sourcehut:env:SOURCEHUT_TOKEN`.
+
 Multiple tokens are allowed. AGMH rotates tokens when a token is rejected, rate
 limited, or temporarily unusable.
 
+In TOML arrays, every token entry must be separated by a comma:
+
+```toml
+[github]
+tokens = [
+  { env = "GITHUB_TOKEN", name = "github-primary" },
+  { env = "GITHUB_TOKEN_2", name = "github-secondary" },
+]
+```
+
+You can also use a named token table:
+
+```toml
+[github.tokens]
+github-primary = { env = "GITHUB_TOKEN" }
+github-secondary = "env:GITHUB_TOKEN_2"
+```
+
 ## Marker File
 
-Before pushing to destinations, AGMH writes a marker file into the default
-branch of the local mirror:
+By default, before pushing to destinations, AGMH writes a marker file into the
+default branch of the local mirror:
 
 ```txt
-anti-gh-ms-hysteria.txt
+agmh.txt
 ```
 
 The marker contains:
@@ -497,6 +858,16 @@ marker_created_at=2026-06-12T00:00:01Z
 
 This is intentional. It makes it clear where the backup came from and when the
 backup process created the provenance marker.
+
+Disable this repository modification with:
+
+```toml
+[backup]
+marker_enabled = false
+```
+
+When `marker_enabled` is `false`, AGMH does not create or update the marker file
+and does not create a marker commit before pushing to destinations.
 
 ## Push Modes
 
@@ -522,6 +893,7 @@ Recommended defaults:
 
 | Destination | Recommended push mode |
 | --- | --- |
+| GitHub | `mirror`, automatically translated to `portable-mirror` |
 | GitLab | `mirror` |
 | Codeberg/Forgejo | `mirror`, automatically translated to `portable-mirror` |
 | SourceHut | `mirror` over SSH, or `portable-mirror` if hidden refs cause rejection |
@@ -726,13 +1098,13 @@ agmh run --config agmh.config.toml \
 AGMH stores resumable state here:
 
 ```txt
-.aghm/state.json
+.agmh/state.json
 ```
 
 Logs are stored here:
 
 ```txt
-.aghm/logs/
+.agmh/logs/
 ```
 
 Show a state summary:
@@ -758,13 +1130,13 @@ agmh run --config agmh.config.toml --no-resume
 Discover only:
 
 ```bash
-agmh discover --sources targets.txt
+agmh discover --sources sources.txt
 ```
 
 Write discovery output to JSON:
 
 ```bash
-agmh discover --sources targets.txt --output discovered-repos.json
+agmh discover --sources sources.txt --output discovered-repos.json
 ```
 
 Back up one GitHub org to GitLab:
@@ -781,6 +1153,34 @@ agmh run \
   --verbose
 ```
 
+Back up one GitLab group to GitHub:
+
+```bash
+export GITLAB_SOURCE_TOKEN="..."
+export GITHUB_DEST_TOKEN="..."
+
+agmh run \
+  --source https://gitlab.com/haltman-io/ \
+  --source-token gitlab:env:GITLAB_SOURCE_TOKEN \
+  --destination https://github.com/haltman-io-mirror \
+  --destination-token github:env:GITHUB_DEST_TOKEN \
+  --verbose
+```
+
+Back up one Codeberg account to GitLab:
+
+```bash
+export CODEBERG_SOURCE_TOKEN="..."
+export GITLAB_TOKEN="..."
+
+agmh run \
+  --source https://codeberg.org/haltman/ \
+  --source-token forgejo:env:CODEBERG_SOURCE_TOKEN \
+  --destination https://gitlab.com/haltman-codeberg-mirror \
+  --destination-token gitlab:env:GITLAB_TOKEN \
+  --verbose
+```
+
 Use Codeberg:
 
 ```bash
@@ -790,6 +1190,30 @@ agmh run \
   --source https://github.com/haltman-io/ \
   --destination https://codeberg.org/haltman \
   --destination-token forgejo:env:CODEBERG_TOKEN \
+  --verbose
+```
+
+Use GitHub as a destination:
+
+```bash
+export GITHUB_TOKEN="..."
+export GITHUB_DEST_TOKEN="..."
+
+agmh run \
+  --source https://github.com/haltman-io/ \
+  --destination https://github.com/haltman-io-mirror \
+  --destination-token github:env:GITHUB_DEST_TOKEN \
+  --github-token env:GITHUB_TOKEN \
+  --verbose
+```
+
+Watch sources and mirror updates:
+
+```bash
+agmh watching \
+  --config agmh.config.toml \
+  --watch-interval 300 \
+  --watch-action full \
   --verbose
 ```
 
@@ -835,9 +1259,9 @@ Or run with:
 PYTHONPATH=src python3 -m anti_gh_ms_hysteria run --help
 ```
 
-### It hangs on `Discovering GitHub repositories`
+### It hangs on source discovery
 
-The first GitHub API request is waiting on network, DNS, proxy, or TLS.
+The first source API request is waiting on network, DNS, proxy, or TLS.
 
 Run:
 
@@ -845,7 +1269,7 @@ Run:
 agmh run --config agmh.config.toml --dry-run -v --request-timeout 5 --max-retries 0
 ```
 
-Check GitHub directly:
+Check the source API directly. For GitHub:
 
 ```bash
 curl -I --max-time 10 https://api.github.com/users/extencil
@@ -926,9 +1350,13 @@ Check the environment:
 
 ```bash
 printenv GITHUB_TOKEN
+printenv GITHUB_DEST_TOKEN
 printenv GITLAB_TOKEN
 printenv CODEBERG_TOKEN
 printenv SOURCEHUT_TOKEN
+printenv DISCORD_WEBHOOK_URL
+printenv TELEGRAM_BOT_TOKEN
+printenv TELEGRAM_CHAT_ID
 ```
 
 Do not paste tokens into logs or issues.
@@ -961,12 +1389,12 @@ Use:
 agmh run --config agmh.config.toml --force
 ```
 
-or edit `.aghm/state.json` carefully.
+or edit `.agmh/state.json` carefully.
 
 ## Security Notes
 
 - Prefer environment variables for secrets.
-- Do not commit `.aghm/`, `backups/`, `aghm.config.toml`, `targets.txt`, `destinations.txt`, or private config files.
+- Do not commit `.agmh/`, `backups/`, `agmh.config.toml`, `sources.txt`, `destinations.txt`, or private config files.
 - Logs scrub configured token secrets.
 - If a token was ever printed before scrubbing existed, rotate it.
 - `--insecure` is useful for debugging or intercepting proxies, but it disables TLS verification.
@@ -982,8 +1410,8 @@ src/anti_gh_ms_hysteria/
   git_ops.py            clone, marker commit, push operations
   http.py               API client, retries, proxy, TLS handling
   state.py              resumable state file
-  sources/github.py     GitHub discovery adapter
-  destinations/         GitLab, Forgejo, Bitbucket, SourceHut adapters
+  sources/              GitHub, GitLab, Forgejo, Bitbucket, SourceHut discovery adapters
+  destinations/         GitHub, GitLab, Forgejo, Bitbucket, SourceHut adapters
 tests/
   test_config_and_utils.py
 ```
@@ -1014,17 +1442,32 @@ CLI smoke test:
 PYTHONPATH=src python -m anti_gh_ms_hysteria run --help
 ```
 
+## Project Files
+
+- [CHANGELOG.md](CHANGELOG.md): release notes and pending changes.
+- [SECURITY.md](SECURITY.md): private vulnerability reporting policy.
+- [CONTRIBUTING.md](CONTRIBUTING.md): development setup and contribution checks.
+- [SUPPORT.md](SUPPORT.md): support paths for bugs, questions, and security reports.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): collaboration expectations.
+- [MAINTAINERS.md](MAINTAINERS.md): maintainer and security contact information.
+
 ## References
 
 - Unlicense: https://unlicense.org/
 - GitHub personal access tokens: https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens
+- GitHub repositories REST API: https://docs.github.com/en/rest/repos/repos
 - GitHub REST API rate limits: https://docs.github.com/rest/rate-limit/rate-limit
 - GitLab personal access tokens: https://docs.gitlab.com/user/profile/personal_access_tokens/
 - GitLab Projects API: https://docs.gitlab.com/api/projects/
+- GitLab Groups API: https://docs.gitlab.com/api/groups/
 - Codeberg access tokens: https://docs.codeberg.org/advanced/access-token/
 - Forgejo API usage: https://forgejo.org/docs/latest/user/api-usage/
+- Bitbucket repositories API: https://developer.atlassian.com/cloud/bitbucket/rest/api-group-repositories/
+- SourceHut git.sr.ht GraphQL API docs: https://docs.sourcehut.org/git.sr.ht/
 - SourceHut GraphQL API docs: https://docs.sourcehut.org/
 - SourceHut: https://sourcehut.org/
+- Discord Webhook Resource: https://docs.discord.com/developers/resources/webhook
+- Telegram Bot API: https://core.telegram.org/bots/api
 - The Hacker's Choice: https://www.thc.org/
 - Segfault.net disposable root servers: https://www.thc.org/segfault/
 - Segfault.net service notes: https://www.thc.org/segfault/free/
@@ -1044,6 +1487,8 @@ possible. See:
 
 ## Author
 
-Author: **root@haltman.io**
+Author: **extencil** <extencil@segfault.net>
+
+Repository: [haltman-io/agmh](https://github.com/haltman-io/agmh)
 
 Produced by **Haltman.IO**.

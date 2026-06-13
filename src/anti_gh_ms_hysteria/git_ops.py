@@ -7,6 +7,7 @@ import subprocess
 from pathlib import Path
 from urllib.parse import quote, urlparse, urlunparse
 
+from . import __version__
 from .models import AppConfig, RepoInfo, TokenCredential
 from .ui import UI
 from .utils import ensure_within, safe_path_part, scrub_secret, utc_now_iso
@@ -188,7 +189,7 @@ class GitMirrorManager:
                         f"user.email={self.cfg.git.author_email}",
                         "commit",
                         "-m",
-                        self.cfg.git.commit_message,
+                        render_commit_message(self.cfg.git.commit_message),
                     ]
                 )
                 self.runner.run(["git", "-C", str(workdir), "push", "origin", f"HEAD:refs/heads/{branch}"])
@@ -228,7 +229,7 @@ class GitMirrorManager:
         if self.cfg.backup.clone_protocol == "ssh" and repo.ssh_url:
             return repo.ssh_url
         if token and repo.clone_url.startswith("https://"):
-            return with_basic_auth(repo.clone_url, "x-access-token", token.secret)
+            return with_basic_auth(repo.clone_url, source_auth_username(repo, token), token.secret)
         return repo.clone_url
 
     def _clean_source_clone_url(self, repo: RepoInfo) -> str:
@@ -243,6 +244,22 @@ def with_basic_auth(url: str, username: str, secret: str) -> str:
     secret_q = quote(secret, safe="")
     netloc = f"{username_q}:{secret_q}@{parsed.netloc}"
     return urlunparse((parsed.scheme, netloc, parsed.path, parsed.params, parsed.query, parsed.fragment))
+
+
+def render_commit_message(template: str) -> str:
+    return template.replace("{version}", __version__)
+
+
+def source_auth_username(repo: RepoInfo, token: TokenCredential) -> str:
+    if token.username:
+        return token.username
+    if repo.source_platform == "github":
+        return "x-access-token"
+    if repo.source_platform in {"gitlab", "sourcehut"}:
+        return "oauth2"
+    if repo.source_platform == "bitbucket":
+        return "x-token-auth"
+    return repo.owner
 
 
 def build_git_ssh_command(cfg: AppConfig) -> str | None:

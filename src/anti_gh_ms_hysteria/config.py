@@ -11,23 +11,53 @@ from .models import (
     DestinationConfig,
     GitConfig,
     GitHubConfig,
+    NotificationsConfig,
     RetryConfig,
+    SourceConfig,
     TokenCredential,
+    WatchConfig,
+    WebhookConfig,
 )
 from .utils import infer_platform, parse_owner_from_profile_url, read_lines_file, resolve_secret
 
 
-def load_config(path: Path | None) -> AppConfig:
+class ConfigError(ValueError):
+    pass
+
+
+def load_config(path: Path | None, mode_override: str | None = None) -> AppConfig:
     if path is None:
-        return AppConfig()
-    data = tomllib.loads(path.read_text(encoding="utf-8"))
+        cfg = AppConfig()
+        if mode_override:
+            cfg.mode = _workflow_mode(mode_override)
+        return cfg
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise ConfigError(f"Cannot read config file {path}: {exc}") from exc
+
+    try:
+        data = tomllib.loads(text)
+    except tomllib.TOMLDecodeError as exc:
+        raise ConfigError(f"Invalid TOML in {path}: {exc}{_toml_error_hint(text)}") from exc
+
     base_dir = path.parent
-    return config_from_dict(data, base_dir)
+    try:
+        return config_from_dict(data, base_dir, mode_override=mode_override)
+    except ConfigError:
+        raise
+    except ValueError as exc:
+        raise ConfigError(f"Invalid config in {path}: {exc}") from exc
 
 
-def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppConfig:
+def config_from_dict(
+    data: dict[str, Any],
+    base_dir: Path | None = None,
+    mode_override: str | None = None,
+) -> AppConfig:
     base_dir = base_dir or Path.cwd()
     cfg = AppConfig()
+    cfg.mode = _workflow_mode(mode_override or data.get("mode", cfg.mode))
     cfg.workspace = _path(data.get("workspace"), base_dir, cfg.workspace)
     cfg.dry_run = bool(data.get("dry_run", cfg.dry_run))
     cfg.verbose = int(data.get("verbose", cfg.verbose))
@@ -37,18 +67,32 @@ def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppC
     cfg.resume = bool(data.get("resume", cfg.resume))
     cfg.force = bool(data.get("force", cfg.force))
     cfg.destinations_file = _optional_path(data.get("destinations_file"), base_dir)
+    cfg.sources_file = _optional_path(data.get("sources_file"), base_dir)
 
     github = data.get("github", {})
     cfg.github = GitHubConfig(
         api_base=str(github.get("api_base", cfg.github.api_base)),
         profiles_file=_optional_path(github.get("profiles_file"), base_dir),
         profiles=list(github.get("profiles", cfg.github.profiles)),
-        tokens=_token_list(github.get("tokens", [])),
+        tokens=[] if cfg.mode == "remote" else _token_list(github.get("tokens", []), "github.tokens"),
     )
 
-    if not cfg.github.tokens:
+    if cfg.mode != "remote" and not cfg.github.tokens:
         cfg.github.tokens = _default_env_tokens(
             [("GITHUB_TOKEN", "GITHUB_TOKEN"), ("GH_TOKEN", "GH_TOKEN")]
+        )
+
+    if cfg.mode != "remote":
+        cfg.sources = [
+            _source_from_dict(raw, parse_tokens=True) for raw in data.get("sources", [])
+        ]
+        cfg.sources.extend(
+            source_from_url(
+                profile,
+                tokens=cfg.github.tokens,
+                api_base=cfg.github.api_base,
+            )
+            for profile in cfg.github.profiles
         )
 
     backup = data.get("backup", {})
@@ -64,6 +108,7 @@ def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppC
             )
         ),
         lfs=bool(backup.get("lfs", cfg.backup.lfs)),
+        marker_enabled=bool(backup.get("marker_enabled", cfg.backup.marker_enabled)),
         marker_filename=_marker_filename(backup.get("marker_filename", cfg.backup.marker_filename)),
         push_mode=str(backup.get("push_mode", cfg.backup.push_mode)),
     )
@@ -82,6 +127,31 @@ def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppC
         wait_on_rate_limit=bool(retry.get("wait_on_rate_limit", cfg.retry.wait_on_rate_limit)),
     )
 
+    watch = data.get("watch", {})
+    cfg.watch = WatchConfig(
+        interval_seconds=_positive_int(
+            watch.get("interval_seconds", cfg.watch.interval_seconds),
+            "watch.interval_seconds",
+        ),
+        action=_watch_action(watch.get("action", cfg.watch.action), "watch.action"),
+        initial_run=bool(watch.get("initial_run", cfg.watch.initial_run)),
+        once=bool(watch.get("once", cfg.watch.once)),
+    )
+
+    notifications = data.get("notifications", {})
+    cfg.notifications = NotificationsConfig(
+        enabled=bool(notifications.get("enabled", cfg.notifications.enabled)),
+        events=_event_list(notifications.get("events", cfg.notifications.events), "notifications.events"),
+        fail_silently=bool(notifications.get("fail_silently", cfg.notifications.fail_silently)),
+        timeout_seconds=float(notifications.get("timeout_seconds", cfg.notifications.timeout_seconds)),
+        webhooks=[
+            _webhook_from_dict(raw, idx)
+            for idx, raw in enumerate(
+                [*data.get("webhooks", []), *notifications.get("webhooks", [])]
+            )
+        ],
+    )
+
     git = data.get("git", {})
     cfg.git = GitConfig(
         author_name=str(git.get("author_name", cfg.git.author_name)),
@@ -97,18 +167,26 @@ def config_from_dict(data: dict[str, Any], base_dir: Path | None = None) -> AppC
         ),
     )
 
-    cfg.destinations = [
-        _destination_from_dict(raw) for raw in data.get("destinations", [])
-    ]
+    if cfg.mode != "local":
+        cfg.destinations = [
+            _destination_from_dict(raw) for raw in data.get("destinations", [])
+        ]
 
     return cfg
 
 
 def apply_profile_file(cfg: AppConfig, path: Path | None) -> None:
     if path:
-        cfg.github.profiles_file = path
+        cfg.sources_file = path
+    if cfg.sources_file:
+        cfg.sources.extend(sources_from_file(cfg.sources_file, github_tokens=cfg.github.tokens))
     if cfg.github.profiles_file:
-        cfg.github.profiles.extend(read_lines_file(cfg.github.profiles_file))
+        profiles = read_lines_file(cfg.github.profiles_file)
+        cfg.github.profiles.extend(profiles)
+        cfg.sources.extend(
+            source_from_url(profile, tokens=cfg.github.tokens, api_base=cfg.github.api_base)
+            for profile in profiles
+        )
 
 
 def apply_destinations_file(cfg: AppConfig, path: Path | None) -> None:
@@ -122,12 +200,66 @@ def destinations_from_file(path: Path) -> list[DestinationConfig]:
     return [destination_from_url(line) for line in read_lines_file(path)]
 
 
+def sources_from_file(
+    path: Path,
+    github_tokens: list[TokenCredential] | None = None,
+) -> list[SourceConfig]:
+    return [
+        source_from_url(line, tokens=github_tokens if _looks_like_github(line) else None)
+        for line in read_lines_file(path)
+    ]
+
+
+def source_from_url(
+    url: str,
+    tokens: list[TokenCredential] | None = None,
+    api_base: str | None = None,
+) -> SourceConfig:
+    platform = infer_platform(url)
+    _, owner, parts = parse_owner_from_profile_url(url)
+    if platform == "gitlab" and parts:
+        owner = "/".join(parts)
+    return SourceConfig(
+        url=url,
+        platform=platform,
+        owner=owner,
+        api_base=api_base if platform == "github" else None,
+        tokens=list(tokens or []) if platform == "github" else [],
+    )
+
+
 def destination_from_url(url: str) -> DestinationConfig:
     platform = infer_platform(url)
     _, owner, parts = parse_owner_from_profile_url(url)
     if platform == "gitlab" and parts:
         owner = "/".join(parts)
     return DestinationConfig(url=url, platform=platform, owner=owner)
+
+
+def _source_from_dict(raw: dict[str, Any], parse_tokens: bool = True) -> SourceConfig:
+    url = str(raw["url"])
+    platform = str(raw.get("platform") or infer_platform(url))
+    _, owner, parts = parse_owner_from_profile_url(url)
+    if platform == "gitlab" and parts:
+        owner = "/".join(parts)
+    owner = str(raw.get("owner") or owner)
+    return SourceConfig(
+        url=url,
+        platform=platform,
+        api_base=raw.get("api_base"),
+        owner=owner,
+        tokens=_token_list(raw.get("tokens", []), f"source {url} tokens") if parse_tokens else [],
+        watch=bool(raw.get("watch", True)),
+        watch_interval_seconds=_optional_positive_int(
+            raw.get("watch_interval_seconds", raw.get("poll_interval_seconds")),
+            f"source {url} watch_interval_seconds",
+        ),
+        watch_action=(
+            _watch_action(raw.get("watch_action"), f"source {url} watch_action")
+            if raw.get("watch_action") is not None
+            else None
+        ),
+    )
 
 
 def _destination_from_dict(raw: dict[str, Any]) -> DestinationConfig:
@@ -142,7 +274,7 @@ def _destination_from_dict(raw: dict[str, Any]) -> DestinationConfig:
         platform=platform,
         api_base=raw.get("api_base"),
         owner=owner,
-        tokens=_token_list(raw.get("tokens", [])),
+        tokens=_token_list(raw.get("tokens", []), f"destination {url} tokens"),
         visibility=str(raw.get("visibility", "mirror")),
         push_mode=str(raw.get("push_mode", "mirror")),
         create=bool(raw.get("create", True)),
@@ -152,23 +284,69 @@ def _destination_from_dict(raw: dict[str, Any]) -> DestinationConfig:
     )
 
 
-def _token_list(raw_tokens: Any) -> list[TokenCredential]:
+def _webhook_from_dict(raw: dict[str, Any], idx: int) -> WebhookConfig:
+    platform = str(raw.get("platform", raw.get("type", "generic"))).strip().lower()
+    if platform not in {"generic", "discord", "telegram"}:
+        raise ConfigError(f"webhook platform must be one of: generic, discord, telegram")
+    name = str(raw.get("name") or f"{platform}-{idx + 1}")
+    message_thread_id = raw.get("message_thread_id")
+    return WebhookConfig(
+        name=name,
+        platform=platform,
+        enabled=bool(raw.get("enabled", True)),
+        events=_event_list(raw.get("events", ["*"]), f"webhook {name} events"),
+        url=raw.get("url"),
+        url_env=raw.get("url_env"),
+        headers=_string_dict(raw.get("headers", {}), f"webhook {name} headers"),
+        username=raw.get("username"),
+        avatar_url=raw.get("avatar_url"),
+        thread_id=raw.get("thread_id"),
+        bot_token=raw.get("bot_token"),
+        bot_token_env=raw.get("bot_token_env"),
+        chat_id=raw.get("chat_id"),
+        chat_id_env=raw.get("chat_id_env"),
+        api_base=str(raw.get("api_base", "https://api.telegram.org")),
+        parse_mode=raw.get("parse_mode"),
+        message_thread_id=int(message_thread_id) if message_thread_id not in (None, "") else None,
+        disable_web_page_preview=bool(raw.get("disable_web_page_preview", True)),
+    )
+
+
+def _token_list(raw_tokens: Any, field_name: str) -> list[TokenCredential]:
     tokens: list[TokenCredential] = []
-    for idx, raw in enumerate(raw_tokens or []):
-        if isinstance(raw, str):
-            if raw.startswith("env:"):
-                env = raw.removeprefix("env:")
-                tokens.append(TokenCredential(resolve_secret(env=env), name=env))
-            else:
-                tokens.append(TokenCredential(raw, name=f"token-{idx + 1}"))
-            continue
-        if not isinstance(raw, dict):
-            raise ValueError(f"Invalid token entry: {raw!r}")
-        secret = resolve_secret(raw.get("value"), raw.get("env"))
-        name = str(raw.get("name") or raw.get("env") or f"token-{idx + 1}")
-        username = raw.get("username")
-        tokens.append(TokenCredential(secret=secret, name=name, username=username))
+    if raw_tokens in (None, ""):
+        return tokens
+
+    if isinstance(raw_tokens, dict):
+        if "env" in raw_tokens or "value" in raw_tokens:
+            return [_token_from_entry(raw_tokens, field_name, 0, None)]
+        return [
+            _token_from_entry(raw, field_name, idx, str(name))
+            for idx, (name, raw) in enumerate(raw_tokens.items())
+        ]
+
+    if not isinstance(raw_tokens, list):
+        raise ConfigError(f"{field_name} must be a list, a token table, or a named token table")
+
+    for idx, raw in enumerate(raw_tokens):
+        tokens.append(_token_from_entry(raw, field_name, idx, None))
     return tokens
+
+
+def _token_from_entry(raw: Any, field_name: str, idx: int, default_name: str | None) -> TokenCredential:
+    fallback_name = default_name or f"token-{idx + 1}"
+    if isinstance(raw, str):
+        if raw.startswith("env:"):
+            env = raw.removeprefix("env:")
+            return TokenCredential(resolve_secret(env=env), name=default_name or env)
+        return TokenCredential(raw, name=fallback_name)
+    if not isinstance(raw, dict):
+        raise ConfigError(f"Invalid {field_name} entry: {raw!r}")
+
+    secret = resolve_secret(raw.get("value"), raw.get("env"))
+    name = str(raw.get("name") or default_name or raw.get("env") or f"token-{idx + 1}")
+    username = raw.get("username")
+    return TokenCredential(secret=secret, name=name, username=username)
 
 
 def _default_env_tokens(envs: list[tuple[str, str]]) -> list[TokenCredential]:
@@ -196,14 +374,24 @@ def parse_cli_token(value: str) -> TokenCredential:
         maybe_user, maybe_token = token_value.split(":", 1)
         if maybe_user and maybe_token:
             username = maybe_user
-            token_value = maybe_token
             name = maybe_user
+            if maybe_token.startswith("env:"):
+                token_value = resolve_secret(env=maybe_token.removeprefix("env:"))
+            else:
+                token_value = maybe_token
     return TokenCredential(token_value, name=name, username=username)
 
 
 def parse_destination_token(value: str) -> tuple[str, TokenCredential]:
     if ":" not in value:
-        raise ValueError("Destination tokens must use platform:token or platform:env:NAME")
+        raise ValueError("Destination tokens must use platform:token, platform:env:NAME, or platform:username:env:NAME")
+    platform, raw = value.split(":", 1)
+    return platform.lower(), parse_cli_token(raw)
+
+
+def parse_source_token(value: str) -> tuple[str, TokenCredential]:
+    if ":" not in value:
+        raise ValueError("Source tokens must use platform:token, platform:env:NAME, or platform:username:env:NAME")
     platform, raw = value.split(":", 1)
     return platform.lower(), parse_cli_token(raw)
 
@@ -235,3 +423,99 @@ def _marker_filename(value: Any) -> str:
     ):
         raise ValueError("backup.marker_filename must be a plain filename, not a path")
     return marker
+
+
+def _workflow_mode(value: Any) -> str:
+    mode = str(value or "full").strip().lower()
+    aliases = {
+        "default": "full",
+        "all": "full",
+        "local-only": "local",
+        "local_mirror": "local",
+        "local-mirror": "local",
+        "remote-only": "remote",
+        "remote_mirror": "remote",
+        "remote-mirror": "remote",
+        "watch": "watching",
+        "watching-mode": "watching",
+    }
+    mode = aliases.get(mode, mode)
+    if mode not in {"full", "local", "remote", "watching"}:
+        raise ConfigError("mode must be one of: full, local, remote, watching")
+    return mode
+
+
+def _watch_action(value: Any, field_name: str) -> str:
+    action = str(value or "full").strip().lower()
+    aliases = {
+        "all": "full",
+        "default": "full",
+        "local-only": "local",
+        "local_mirror": "local",
+        "local-mirror": "local",
+        "remote-only": "remote",
+        "remote_mirror": "remote",
+        "remote-mirror": "remote",
+    }
+    action = aliases.get(action, action)
+    if action not in {"full", "local", "remote"}:
+        raise ConfigError(f"{field_name} must be one of: full, local, remote")
+    return action
+
+
+def _positive_int(value: Any, field_name: str) -> int:
+    try:
+        number = int(value)
+    except (TypeError, ValueError) as exc:
+        raise ConfigError(f"{field_name} must be a positive integer") from exc
+    if number <= 0:
+        raise ConfigError(f"{field_name} must be a positive integer")
+    return number
+
+
+def _optional_positive_int(value: Any, field_name: str) -> int | None:
+    if value in (None, ""):
+        return None
+    return _positive_int(value, field_name)
+
+
+def _event_list(value: Any, field_name: str) -> list[str]:
+    if value in (None, ""):
+        return ["*"]
+    if isinstance(value, str):
+        return [value.strip()]
+    if not isinstance(value, list):
+        raise ConfigError(f"{field_name} must be a string or list of strings")
+    events = [str(item).strip() for item in value if str(item).strip()]
+    return events or ["*"]
+
+
+def _string_dict(value: Any, field_name: str) -> dict[str, str]:
+    if value in (None, ""):
+        return {}
+    if not isinstance(value, dict):
+        raise ConfigError(f"{field_name} must be a table")
+    return {str(key): str(item) for key, item in value.items()}
+
+
+def _looks_like_github(url: str) -> bool:
+    try:
+        return infer_platform(url) == "github"
+    except ValueError:
+        return False
+
+
+def _toml_error_hint(text: str) -> str:
+    if "tokens" not in text:
+        return ""
+    return (
+        "\n\nFor multiple github.tokens entries, use commas between array items:\n"
+        'tokens = [\n'
+        '  { env = "GITHUB_TOKEN", name = "github-primary" },\n'
+        '  { env = "GITHUB_TOKEN_2", name = "github-secondary" },\n'
+        ']\n\n'
+        "You can also use a named token table:\n"
+        "[github.tokens]\n"
+        'github-primary = { env = "GITHUB_TOKEN" }\n'
+        'github-secondary = { env = "GITHUB_TOKEN_2" }'
+    )

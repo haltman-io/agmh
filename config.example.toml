@@ -1,16 +1,65 @@
-workspace = ".aghm"
+workspace = ".agmh"
+mode = "full"
 dry_run = false
 verbose = 0
 tui = true
 insecure_tls = false
+sources_file = "sources.txt"
 
 [github]
-# Copy targets.example.txt to targets.txt, then edit targets.txt for your run.
-profiles_file = "targets.txt"
+# Optional defaults for GitHub source URLs from sources_file or [github].profiles.
 tokens = [
   { env = "GITHUB_TOKEN", name = "github-primary" },
   # { env = "GITHUB_TOKEN_2", name = "github-secondary" },
 ]
+
+[watch]
+interval_seconds = 300
+action = "full"
+initial_run = true
+once = false
+
+[notifications]
+enabled = false
+events = ["*"]
+fail_silently = true
+timeout_seconds = 10
+
+# [[webhooks]]
+# name = "ops-discord"
+# platform = "discord"
+# url_env = "DISCORD_WEBHOOK_URL"
+# events = ["start", "finish", "error", "local_saved", "remote_saved", "watch_check", "watch_update", "watch_none"]
+# username = "AGMH"
+# thread_id = "123456789012345678"
+#
+# [[webhooks]]
+# name = "ops-telegram"
+# platform = "telegram"
+# bot_token_env = "TELEGRAM_BOT_TOKEN"
+# chat_id_env = "TELEGRAM_CHAT_ID"
+# events = ["start", "finish", "error", "watch_update"]
+# parse_mode = "HTML"
+# message_thread_id = 42
+#
+# [[webhooks]]
+# name = "ops-generic"
+# platform = "generic"
+# url_env = "AGMH_WEBHOOK_URL"
+# events = ["*"]
+
+# Use inline sources when a non-GitHub source needs its own token or API base.
+# [[sources]]
+# url = "https://gitlab.com/extencil"
+# platform = "gitlab"
+# tokens = [{ env = "GITLAB_SOURCE_TOKEN", name = "gitlab-source" }]
+# watch_interval_seconds = 120
+# watch_action = "local"
+#
+# [[sources]]
+# url = "https://codeberg.org/extencil"
+# platform = "forgejo"
+# tokens = [{ env = "CODEBERG_SOURCE_TOKEN", username = "extencil" }]
 
 [backup]
 local_dir = "backups"
@@ -19,6 +68,7 @@ include_archived = true
 include_forks = true
 include_private_for_authenticated_user = true
 lfs = false
+marker_enabled = true
 push_mode = "mirror"
 
 [retry]
@@ -30,9 +80,9 @@ rate_limit_sleep_seconds = 300
 wait_on_rate_limit = true
 
 [git]
-author_name = "anti-GH-MS-hysteria"
-author_email = "anti-gh-ms-hysteria@localhost"
-commit_message = "Add anti-GH-MS-hysteria backup marker"
+author_name = "agmh"
+author_email = "agmh@localhost"
+commit_message = "Backuping with AGMH v{version}"
 # ssh_identity_file = "/home/user/.ssh/sourcehut_ed25519"
 # ssh_identities_only = true
 # ssh_batch_mode = false
@@ -43,6 +93,13 @@ commit_message = "Add anti-GH-MS-hysteria backup marker"
 url = "https://gitlab.com/extencil"
 platform = "gitlab"
 tokens = [{ env = "GITLAB_TOKEN", name = "gitlab-primary" }]
+visibility = "mirror"
+push_mode = "mirror"
+
+[[destinations]]
+url = "https://github.com/extencil-mirror"
+platform = "github"
+tokens = [{ env = "GITHUB_DEST_TOKEN", name = "github-destination" }]
 visibility = "mirror"
 push_mode = "mirror"
 
