@@ -18,4 +18,5 @@
 - Keep generated examples aligned with `config.example.toml`.
 - Keep security-sensitive changes covered by tests.
 - Keep release notes in `CHANGELOG.md`.
-
+- Keep `RELEASING.md` and GitHub Actions publishing workflows aligned with PyPI
+  Trusted Publishing settings.

@@ -39,5 +39,11 @@ dev = ["build>=1.2", "twine>=5.1"]
 [project.scripts]
 agmh = "anti_gh_ms_hysteria.cli:main"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+anti_gh_ms_hysteria = ["py.typed"]

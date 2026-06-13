@@ -3,9 +3,11 @@ from __future__ import annotations
 import os
 import subprocess
 import tempfile
+import tomllib
 import unittest
 from pathlib import Path
 
+import anti_gh_ms_hysteria
 from anti_gh_ms_hysteria.config import (
     ConfigError,
     config_from_dict,
@@ -244,6 +246,10 @@ class TokenParsingTests(unittest.TestCase):
 
 
 class ConfigTests(unittest.TestCase):
+    def test_package_version_matches_pyproject(self) -> None:
+        data = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+        self.assertEqual(anti_gh_ms_hysteria.__version__, data["project"]["version"])
+
     def test_default_generated_names_use_agmh(self) -> None:
         cfg = config_from_dict({}, Path.cwd())
         self.assertEqual(cfg.workspace, Path(".agmh"))

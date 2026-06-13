@@ -1334,6 +1334,15 @@ src/anti_gh_ms_hysteria/
   destinations/         GitHub, GitLab, Forgejo, Bitbucket, SourceHut adapters
 tests/
   test_config_and_utils.py
+.github/workflows/
+  ci.yml                tests and package checks
+  release-please.yml    release PR, changelog, tag, GitHub Release, PyPI publish
+  publish-pypi.yml      manual PyPI publish fallback through Trusted Publishing
+  publish-testpypi.yml  manual TestPyPI publish through Trusted Publishing
+pyproject.toml          package metadata and build configuration
+MANIFEST.in             source distribution file list
+release-please-config.json
+.release-please-manifest.json
 ```
 
 ## Development
@@ -1360,6 +1369,13 @@ CLI smoke test:
 
 ```bash
 PYTHONPATH=src python -m anti_gh_ms_hysteria run --help
+```
+
+Package check:
+
+```bash
+python -m build
+python -m twine check --strict dist/*
 ```
 
 ## Project Background
@@ -1482,6 +1498,7 @@ Haltman.IO links:
 - [CHANGELOG.md](CHANGELOG.md): release notes and pending changes.
 - [SECURITY.md](SECURITY.md): private vulnerability reporting policy.
 - [CONTRIBUTING.md](CONTRIBUTING.md): development setup and contribution checks.
+- [RELEASING.md](RELEASING.md): Release Please and PyPI publishing process.
 - [SUPPORT.md](SUPPORT.md): support paths for bugs, questions, and security reports.
 - [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): collaboration expectations.
 - [MAINTAINERS.md](MAINTAINERS.md): maintainer and security contact information.

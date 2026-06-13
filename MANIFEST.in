@@ -1,0 +1,17 @@
+include README.md
+include LICENSE
+include CHANGELOG.md
+include SECURITY.md
+include CONTRIBUTING.md
+include SUPPORT.md
+include CODE_OF_CONDUCT.md
+include MAINTAINERS.md
+include RELEASING.md
+include config.example.toml
+include sources.example.txt
+include destinations.example.txt
+include .release-please-manifest.json
+include release-please-config.json
+recursive-include .github *.md *.yml
+recursive-include src *.typed
+recursive-include tests *.py
