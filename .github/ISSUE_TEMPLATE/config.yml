@@ -1,0 +1,9 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security report
+    url: mailto:root@haltman.io
+    about: Do not open public security issues. Email root@haltman.io.
+  - name: Repository
+    url: https://github.com/haltman-io/agmh
+    about: Main AGMH repository.
+

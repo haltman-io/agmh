@@ -70,8 +70,8 @@ class BackupConfig:
 
 @dataclass
 class GitConfig:
-    author_name: str = "agmh"
-    author_email: str = "agmh@localhost"
+    author_name: str = "extencil"
+    author_email: str = "extencil@segfault.net"
     commit_message: str = "Backuping with AGMH v{version}"
     ssh_command: str | None = None
     ssh_identity_file: Path | None = None

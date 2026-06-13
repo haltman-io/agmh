@@ -249,8 +249,8 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(cfg.workspace, Path(".agmh"))
         self.assertTrue(cfg.backup.marker_enabled)
         self.assertEqual(cfg.backup.marker_filename, "agmh.txt")
-        self.assertEqual(cfg.git.author_name, "agmh")
-        self.assertEqual(cfg.git.author_email, "agmh@localhost")
+        self.assertEqual(cfg.git.author_name, "extencil")
+        self.assertEqual(cfg.git.author_email, "extencil@segfault.net")
         self.assertEqual(cfg.git.commit_message, "Backuping with AGMH v{version}")
 
     def test_backup_marker_can_be_disabled(self) -> None:

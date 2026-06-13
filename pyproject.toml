@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=69"]
+requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -8,12 +8,33 @@ version = "0.1.0"
 description = "AGMH, a local GitHub backup and repository mirroring CLI."
 readme = "README.md"
 requires-python = ">=3.11"
-license = { text = "Unlicense" }
-authors = [{ name = "root@haltman.io" }]
+license = "Unlicense"
+license-files = ["LICENSE"]
+authors = [{ name = "extencil", email = "extencil@segfault.net" }]
+maintainers = [{ name = "extencil", email = "extencil@segfault.net" }]
+keywords = ["backup", "git", "github", "mirror", "repository"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Version Control :: Git",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/haltman-io/agmh"
+Repository = "https://github.com/haltman-io/agmh"
+Issues = "https://github.com/haltman-io/agmh/issues"
 
 [project.optional-dependencies]
 tui = ["rich>=13.7"]
+dev = ["build>=1.2", "twine>=5.1"]
 
 [project.scripts]
 agmh = "anti_gh_ms_hysteria.cli:main"

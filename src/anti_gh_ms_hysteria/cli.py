@@ -79,8 +79,8 @@ visibility = "mirror"
 push_mode = "mirror"
 
 [git]
-author_name = "agmh"
-author_email = "agmh@localhost"
+author_name = "extencil"
+author_email = "extencil@segfault.net"
 commit_message = "Backuping with AGMH v{version}"
 # ssh_identity_file = "/home/user/.ssh/sourcehut_ed25519"
 # ssh_strict_host_key_checking = "accept-new"

@@ -8,6 +8,8 @@
 
 AGMH means **ANTI GITHUB & MICROSOFT HYSTERIA**.
 
+Repository: [haltman-io/agmh](https://github.com/haltman-io/agmh)
+
 AGMH is a local backup and repository mirroring CLI built to help researchers,
 maintainers, and software teams pull their work out of a forge quickly and push
 it to another forge without losing years of history, branches, tags, or research.
@@ -29,74 +31,86 @@ default config files, state directories, logs, and generated marker files.
 
 ## Project Statement
 
-This tool exists because people need a fast, practical way to remove their work
-from a platform before a platform removes them.
+This tool exists because important work should not depend on a single platform
+remaining available, cooperative, or operational forever.
 
-AGMH was built in the context of a ban-wave against security researchers and the
-public conflict around MSRC, the Microsoft Security Response Center, and the
-researchers behind:
+AGMH was built after past platform access incidents made us reassess the risk of
+being locked out of a large technology platform without enough time to preserve
+our work or coordinate with the people closest to a project. The risk is similar
+to an abrupt offboarding process where access is disabled so quickly that a
+person cannot even send a final email to close colleagues.
 
-- https://x.com/ChaoticEclipse0
-- https://x.com/xploitrsturtle2
+For software projects, that access risk is broader than any single account or
+provider. A team can lose continuity because of enforcement actions, sanctions,
+provider policy changes, operational outages, service degradation, acquisition
+risk, or a platform eventually disappearing. The critical issue is
+centralization: if repository history, issues, branches, tags, release metadata,
+and collaboration context all live in one place, a disruption in that place can
+have a large impact on the surrounding ecosystem.
 
-The position of this project is explicit: when a centralized development
-platform adopts policies that can be used to repress security researchers
-because triagers, vendors, or corporate response teams had their egos bruised,
-researchers need escape tools. If the people responsible for keeping software
-secure had done their job, the ecosystem would not be in this situation.
+This is not a personal fight with GitHub. It is a risk-management and business
+continuity problem. AGMH provides a practical way to keep local mirrors, move
+repositories between forges, preserve Git history, and maintain high
+availability of project information when a centralized platform becomes
+unavailable or unsuitable.
 
-This is not a personal fight with GitHub. It is a practical statement that
-people must have the right and the ability to remove their own work from GitHub
-and move it elsewhere before they lose years of research, tooling, issue
-history, public contributions, branches, tags, and project continuity.
-
-AGMH was produced by **Haltman.IO** as a peaceful protest and as a practical
-tool. It was not produced by `@extencil`, but by the same group he is part of,
-and it is released freely so others can protect their own work.
+AGMH is produced by **Haltman.IO** and released freely so others can protect
+their own work.
 
 This tool has already been used to back up repositories from `@extencil` and
 `@haltman-io` to GitLab, Codeberg, and SourceHut successfully.
 
-This may be the last Haltman.IO project released on this shameful platform,
-which in the view of this project has adopted a policy of repression against
-security researchers because two of them hurt the ego of MSRC triagers.
+## Continuity Incident Timeline
 
-## Public Mirrors And Accounts
-
-AGMH was used to move the work of `@extencil` and `@haltman-io` away from
-GitHub and into independent mirrors.
-
-Extencil mirrors:
+AGMH was used to move the work of `@extencil` and `@haltman-io` away from a
+single forge dependency and into independent mirrors:
 
 - GitLab: https://gitlab.com/extencil
 - Codeberg: https://codeberg.org/extencil
 - SourceHut: https://git.sr.ht/~extencil
-
-Haltman.IO mirrors:
-
 - GitLab: https://gitlab.com/haltman-io
 - Codeberg: https://codeberg.org/haltman
 
-Extencil also uses X, where he exposed the case around his ban:
+The account access incident that reinforced this risk model followed this
+timeline:
 
-- X profile: https://x.com/extencil
-- Ban case statement: https://x.com/extencil/status/2065150696937115988
-
-Extencil public links:
-
-| Network | Link |
+| Event | Time |
 | --- | --- |
-| ORCID | https://orcid.org/0009-0007-0914-3920 |
-| Email | extencil@proton.thc.org, extencil@segfault.net, extencil@haltman.io, extencil@haltman.org, extencil@metasploit.io, extencil@lockbit.io, extencil@polkit.org |
-| Telegram | https://t.me/extencil |
-| Discord | `@extencil` |
-| Signal | `@extencil.01` |
-| Bluesky | https://bsky.app/profile/extencil.me |
-| Mastodon | https://mastodon.social/@extencil |
-| GitHub | ~~https://github.com/extencil~~ - taken down by Microslop |
-| Reddit | https://reddit.com/user/extencil |
-| GitLab | https://gitlab.com/extencil |
-| YouTube | https://youtube.com/@extencil-thc |
+| Account suspended/banned by platform enforcement | Monday, 2026-06-08, around 04:00 `America/Sao_Paulo` (`UTC-03:00`), approximately 2026-06-08 07:00 UTC |
+| Review ticket opened | 2026-06-08 07:59 UTC, 2026-06-08 04:59 `America/Sao_Paulo` |
+| Priority follow-up sent by our side | 2026-06-11 16:47 UTC, 2026-06-11 13:47 `America/Sao_Paulo` |
+| Case reviewed and reverted by GitHub | 2026-06-12 11:19 UTC, 2026-06-12 08:19 `America/Sao_Paulo` |
+
+The incident would have been significantly more damaging without continuity
+procedures already in place. When Haltman.IO created its GitHub organization,
+other Haltman.IO members were assigned as organization owners. That avoided a
+complete lockout scenario.
+
+Someone who is not part of an organization, or who is not an organization owner
+or repository administrator, cannot reliably operate that organization. They
+cannot recover organization-level access, manage owners and teams, change
+organization settings, manage repository permissions, configure secrets,
+webhooks, deploy keys, branch protection, or security settings, create or
+transfer repositories, publish releases, or consistently triage and merge work
+across the organization.
+
+This matters because the affected work is operational, not cosmetic. Haltman.IO
+voluntarily sustains email-forwarding infrastructure associated with The
+Hacker's Choice, in collaboration with Phrack, Eurocompton, team-teso, Antisec,
+pwnbuffer, and other groups connected to cybersecurity research. A complete
+organization lockout would have affected the ability to manage the many
+repositories behind that email-forwarding stack.
+
+That impact is not about minor product changes or visual polish. It affects the
+ability to coordinate proper vulnerability disclosure for people who self-host
+the email-forwarding stack, publish fixes, document operational changes, and
+credit researchers correctly when they report vulnerabilities.
+
+It also affects our internal service expectations. There is no legal or
+commercial SLA: we do not sell this work, and the output is public work for the
+public. Still, we prefer to respond to issues and pull requests quickly. Acting
+like a large platform with effectively unbounded response times is neither our
+role nor consistent with Haltman.IO's operating values.
 
 ## Haltman.IO
 
@@ -526,8 +540,8 @@ rate_limit_sleep_seconds = 300
 wait_on_rate_limit = true
 
 [git]
-author_name = "root"
-author_email = "root@haltman.io"
+author_name = "extencil"
+author_email = "extencil@segfault.net"
 commit_message = "Backuping with AGMH v{version}"
 # ssh_identity_file = "/home/user/.ssh/sourcehut_ed25519"
 # ssh_identities_only = true
@@ -1428,6 +1442,15 @@ CLI smoke test:
 PYTHONPATH=src python -m anti_gh_ms_hysteria run --help
 ```
 
+## Project Files
+
+- [CHANGELOG.md](CHANGELOG.md): release notes and pending changes.
+- [SECURITY.md](SECURITY.md): private vulnerability reporting policy.
+- [CONTRIBUTING.md](CONTRIBUTING.md): development setup and contribution checks.
+- [SUPPORT.md](SUPPORT.md): support paths for bugs, questions, and security reports.
+- [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md): collaboration expectations.
+- [MAINTAINERS.md](MAINTAINERS.md): maintainer and security contact information.
+
 ## References
 
 - Unlicense: https://unlicense.org/
@@ -1464,6 +1487,8 @@ possible. See:
 
 ## Author
 
-Author: **root@haltman.io**
+Author: **extencil** <extencil@segfault.net>
+
+Repository: [haltman-io/agmh](https://github.com/haltman-io/agmh)
 
 Produced by **Haltman.IO**.

@@ -9,6 +9,7 @@ import urllib.request
 from dataclasses import dataclass
 from typing import Any
 
+from . import __version__
 from .models import AppConfig, WebhookConfig
 from .ui import UI
 from .utils import safe_display_url, scrub_secret, utc_now_iso
@@ -110,7 +111,7 @@ class Notifier:
         request_headers = {
             "Accept": "application/json",
             "Content-Type": "application/json",
-            "User-Agent": "agmh/0.1",
+            "User-Agent": f"agmh/{__version__}",
             **headers,
         }
         req = urllib.request.Request(url, data=body, headers=request_headers, method="POST")
