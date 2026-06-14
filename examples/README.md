@@ -42,6 +42,6 @@ Use the smallest example that matches your goal. If the scenario only needs publ
 | [18 Two-Step Local Mirror then Remote Mirror](18-two-step-local-mirror-then-remote-mirror.md) | Run local mirror first, then push later from local state. | Resume state, remote-mirror |
 | [19 Discord Thread Notifications](19-discord-thread-notifications.md) | Send AGMH notifications into a specific Discord thread. | Discord webhook thread ID |
 | [20 Dry Run and State Audit](20-dry-run-and-state-audit.md) | Validate a mirror plan before mutating local or remote state. | `--dry-run`, `state`, audit |
+| [21 Mirror to a Generic Git VPS Destination](21-generic-git-vps-destination.md) | Mirror repositories to existing bare Git repositories on a VPS over SSH. | Generic Git destination, SSH, portable mirrors |
 | [Shared Token and Webhook Reference](shared-token-and-webhook-reference.md) | Common token and webhook setup notes used by examples. | Provider references |
 | [Example Template](EXAMPLE_TEMPLATE.md) | Template for contributing new examples. | Reproducible structure |
-

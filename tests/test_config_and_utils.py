@@ -20,6 +20,7 @@ from anti_gh_ms_hysteria.config import (
 )
 from anti_gh_ms_hysteria.cli import build_config_from_args, build_parser
 from anti_gh_ms_hysteria.destinations import build_destination
+from anti_gh_ms_hysteria.destinations.git import GitDestination
 from anti_gh_ms_hysteria.destinations.github import GitHubDestination
 from anti_gh_ms_hysteria.destinations.gitlab import GitLabDestination
 from anti_gh_ms_hysteria.destinations.gitlab import gitlab_safe_project_path
@@ -338,6 +339,22 @@ class ConfigTests(unittest.TestCase):
         self.assertEqual(cfg.sources[0].platform, "gitlab")
         self.assertEqual(cfg.sources[0].owner, "group/subgroup")
         self.assertEqual(cfg.sources[0].tokens[0].secret, "gl-secret")
+
+    def test_config_from_dict_accepts_generic_git_destination_without_url(self) -> None:
+        cfg = config_from_dict(
+            {
+                "destinations": [
+                    {
+                        "platform": "git",
+                        "push_url_template": "git@backup.example.com:/srv/git/{owner}/{repo}.git",
+                        "push_mode": "portable-mirror",
+                    }
+                ]
+            },
+            Path.cwd(),
+        )
+        self.assertEqual(cfg.destinations[0].platform, "git")
+        self.assertEqual(cfg.destinations[0].url, "git@backup.example.com:/srv/git/{owner}/{repo}.git")
 
     def test_build_config_from_args_loads_generic_sources_file(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -754,6 +771,41 @@ class DestinationMappingTests(unittest.TestCase):
         )
         self.assertIsInstance(destination, GitHubDestination)
 
+    def test_builds_generic_git_destination(self) -> None:
+        destination = build_destination(
+            DestinationConfig(
+                url="backup-vps",
+                platform="git",
+                push_url_template="git@backup.example.com:/srv/git/{owner}/{repo}.git",
+            ),
+            AppConfig(),
+            DummyUI(),
+        )
+        self.assertIsInstance(destination, GitDestination)
+        self.assertEqual(
+            destination.push_urls(repo_info()),
+            ["git@backup.example.com:/srv/git/owner/repo.git"],
+        )
+        created = destination.create_repository(repo_info())
+        self.assertFalse(created.created)
+        self.assertEqual(created.push_url, "git@backup.example.com:/srv/git/owner/repo.git")
+
+    def test_generic_git_destination_can_authenticate_https_template(self) -> None:
+        destination = GitDestination(
+            DestinationConfig(
+                url="backup",
+                platform="git",
+                tokens=[TokenCredential("secret", username="mirror")],
+                push_url_template="https://backup.example.com/git/{full_name}.git",
+            ),
+            AppConfig(),
+            DummyUI(),
+        )
+        self.assertEqual(
+            destination.push_urls(repo_info()),
+            ["https://mirror:secret@backup.example.com/git/owner/repo.git"],
+        )
+
     def test_github_destination_push_url_and_auth(self) -> None:
         destination = GitHubDestination(
             DestinationConfig(
@@ -1099,6 +1151,56 @@ class RunnerTests(unittest.TestCase):
         self.assertEqual(result, 0)
         self.assertEqual(pushes, [(mirror_path, "https://gitlab.com/owner/repo.git", "mirror", "main")])
         self.assertIn("remote_saved", [event[0] for event in notifier.events])
+
+    def test_remote_mode_pushes_existing_state_mirror_to_generic_git(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            mirror_path = Path(tmp) / "backups" / "github" / "owner" / "repo.git"
+            mirror_path.mkdir(parents=True)
+            (mirror_path / "HEAD").write_text("ref: refs/heads/main\n", encoding="utf-8")
+            cfg = AppConfig(
+                mode="remote",
+                workspace=Path(tmp) / ".agmh",
+                backup=BackupConfig(local_dir=Path(tmp) / "backups"),
+                destinations=[
+                    DestinationConfig(
+                        url="backup-vps",
+                        platform="git",
+                        push_url_template="git@backup.example.com:/srv/git/{owner}/{repo}.git",
+                        push_mode="portable-mirror",
+                    )
+                ],
+            )
+            state = StateStore(cfg.workspace / "state.json")
+            state.mark_repo_metadata(
+                "github:owner/repo",
+                source_url="https://github.com/owner/repo",
+                full_name="owner/repo",
+                private=True,
+                default_branch="main",
+            )
+            state.mark_step(
+                "github:owner/repo",
+                "clone",
+                "done",
+                path=str(mirror_path),
+                downloaded_at="2026-06-13T00:00:00Z",
+            )
+            state.mark_step("github:owner/repo", "marker", "done", branch="main")
+
+            runner = MirrorRunner(cfg, DummyUI())
+            pushes = []
+
+            def record_push(path: Path, push_url: str, push_mode: str, default_branch: str | None) -> None:
+                pushes.append((path, push_url, push_mode, default_branch))
+
+            runner.git.push = record_push
+            result = runner.run()
+
+        self.assertEqual(result, 0)
+        self.assertEqual(
+            pushes,
+            [(mirror_path, "git@backup.example.com:/srv/git/owner/repo.git", "portable-mirror", "main")],
+        )
 
     def test_remote_visibility_flag_overrides_destination_config(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:

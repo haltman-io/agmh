@@ -3,6 +3,7 @@ from __future__ import annotations
 from .base import DestinationAdapter
 from .bitbucket import BitbucketDestination
 from .forgejo import ForgejoDestination
+from .git import GitDestination
 from .github import GitHubDestination
 from .gitlab import GitLabDestination
 from .sourcehut import SourceHutDestination
@@ -20,6 +21,8 @@ def build_destination(adapter_config, app_config, ui) -> DestinationAdapter:
         return BitbucketDestination(adapter_config, app_config, ui)
     if platform in {"sourcehut", "srht"}:
         return SourceHutDestination(adapter_config, app_config, ui)
+    if platform == "git":
+        return GitDestination(adapter_config, app_config, ui)
     raise ValueError(f"Unsupported destination platform: {adapter_config.platform}")
 
 

@@ -124,3 +124,11 @@ tokens = [{ env = "SOURCEHUT_TOKEN", name = "sourcehut-primary" }]
 visibility = "mirror"
 push_mode = "mirror"
 push_url_template = "git@git.sr.ht:~{owner}/{repo}"
+
+# Generic Git destination. The remote bare repositories must already exist.
+# [[destinations]]
+# platform = "git"
+# url = "backup-vps"
+# create = false
+# push_url_template = "git@backup.example.com:/srv/git/{owner}/{repo}.git"
+# push_mode = "portable-mirror"

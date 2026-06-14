@@ -175,6 +175,7 @@ AGMH cannot:
 | Codeberg | Yes | Yes | With custom URL | `portable-mirror` avoids GitHub-specific special refs. |
 | Bitbucket | Yes | Yes | With custom URL | Uses compatible basic/token authentication. |
 | SourceHut | Yes | Optional | Yes | SSH push is recommended; `push_url_template` is common. |
+| Generic Git | No | Yes | Yes | Pushes to a configured Git URL template. Remote bare repositories must already exist. |
 
 ## Operation Modes
 
@@ -684,6 +685,31 @@ ssh_identities_only = true
 ssh_batch_mode = true
 ssh_strict_host_key_checking = "accept-new"
 ```
+
+### Generic Git destination
+
+Use this when the destination is an existing bare Git repository, not a forge
+with an API. AGMH does not create repositories for this destination type.
+
+```toml
+[[destinations]]
+platform = "git"
+url = "backup-vps"
+create = false
+push_url_template = "git@backup.example.com:/srv/git/{owner}/{repo}.git"
+push_mode = "portable-mirror"
+```
+
+For a source repository such as `example-org/service`, this pushes to:
+
+```text
+git@backup.example.com:/srv/git/example-org/service.git
+```
+
+Available template fields include `{owner}`, `{source_owner}`, `{repo}`,
+`{name}`, `{full_name}`, `{source_platform}`, `{platform}`, and
+`{destination_owner}`. For generic Git destinations, `{owner}` is the source
+repository owner.
 
 ## Scenario Examples
 
@@ -1688,14 +1714,14 @@ restore testing.
 
 | Key | Description |
 | --- | --- |
-| `url` | Destination URL. |
-| `platform` | `github`, `gitlab`, `forgejo`, `bitbucket`, or `sourcehut`. |
+| `url` | Destination URL. For `platform = "git"`, this may be a display label when `push_url_template` is set. |
+| `platform` | `github`, `gitlab`, `forgejo`, `bitbucket`, `sourcehut`, or `git`. |
 | `api_base` | Custom API. |
 | `owner` | Explicit owner/namespace/workspace. |
 | `tokens` | Token list. |
 | `visibility` | `mirror`, `public`, `private`, or `unlisted`. |
 | `push_mode` | `mirror`, `portable-mirror`, `all`, or `default`. |
-| `create` | Creates repository through API. |
+| `create` | Creates repository through API. Ignored by `platform = "git"`. |
 | `allow_existing` | Continues when the repository already exists. |
 | `git_username` | Username for Git HTTPS authentication. |
 | `push_url_template` | Custom push URL template. |

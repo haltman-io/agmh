@@ -263,12 +263,17 @@ def _source_from_dict(raw: dict[str, Any], parse_tokens: bool = True) -> SourceC
 
 
 def _destination_from_dict(raw: dict[str, Any]) -> DestinationConfig:
-    url = str(raw["url"])
-    platform = str(raw.get("platform") or infer_platform(url))
-    _, owner, parts = parse_owner_from_profile_url(url)
-    if platform == "gitlab" and parts:
-        owner = "/".join(parts)
-    owner = str(raw.get("owner") or owner)
+    raw_url = raw.get("url")
+    platform = str(raw.get("platform") or infer_platform(str(raw_url)))
+    if platform == "git":
+        url = str(raw_url or raw.get("name") or raw.get("push_url_template") or "git")
+        owner = str(raw.get("owner") or "")
+    else:
+        url = str(raw["url"])
+        _, owner, parts = parse_owner_from_profile_url(url)
+        if platform == "gitlab" and parts:
+            owner = "/".join(parts)
+        owner = str(raw.get("owner") or owner)
     return DestinationConfig(
         url=url,
         platform=platform,

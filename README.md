@@ -355,6 +355,7 @@ or config files exist yet.
 | [Two-step local mirror then remote mirror](examples/18-two-step-local-mirror-then-remote-mirror.md) | Create local mirrors first, then push them later. |
 | [Discord thread notifications](examples/19-discord-thread-notifications.md) | Send AGMH notifications to a specific Discord thread. |
 | [Dry run and state audit](examples/20-dry-run-and-state-audit.md) | Validate mirror plans with `--dry-run` and inspect AGMH state. |
+| [Mirror to a generic Git VPS destination](examples/21-generic-git-vps-destination.md) | Push mirrors to existing bare Git repositories over SSH. |
 | [Shared token and webhook reference](examples/shared-token-and-webhook-reference.md) | Common credential setup notes used by the examples. |
 
 ## Quick Config Example
