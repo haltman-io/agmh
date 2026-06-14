@@ -5,6 +5,13 @@ All notable project changes should be documented in this file.
 This project uses human-readable release notes grouped by version. Dates use
 `YYYY-MM-DD`.
 
+## [0.4.0](https://github.com/haltman-io/agmh/compare/v0.3.0...v0.4.0) (2026-06-14)
+
+
+### Features
+
+* add support for generic Git destinations with configurable push URLs ([edbdf87](https://github.com/haltman-io/agmh/commit/edbdf87a83e8bd27555d0c81923c630459362f48))
+
 ## [0.3.0](https://github.com/haltman-io/agmh/compare/v0.2.0...v0.3.0) (2026-06-13)
 
 
