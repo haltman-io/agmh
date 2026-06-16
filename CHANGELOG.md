@@ -5,6 +5,13 @@ All notable project changes should be documented in this file.
 This project uses human-readable release notes grouped by version. Dates use
 `YYYY-MM-DD`.
 
+## [0.4.2](https://github.com/haltman-io/agmh/compare/v0.4.1...v0.4.2) (2026-06-16)
+
+
+### Documentation
+
+* add installation instructions for cloned repository and new example for mirroring GitHub user to Forgejo ([1c8474b](https://github.com/haltman-io/agmh/commit/1c8474b13dcb72d075a895b4c2ed7dd16da8216d))
+
 ## [0.4.1](https://github.com/haltman-io/agmh/compare/v0.4.0...v0.4.1) (2026-06-16)
 
 
