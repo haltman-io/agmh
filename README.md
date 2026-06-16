@@ -64,6 +64,74 @@ python3 -m pip install -U pip
 python3 -m pip install "agmh[tui]"
 ```
 
+Install from a cloned repository:
+
+AGMH requires Python 3.11 or newer. Use a virtual environment for local source
+checkouts so the command is installed without writing into the system Python.
+
+Linux or macOS:
+
+```bash
+git clone https://github.com/haltman-io/agmh.git
+cd agmh
+
+python3 -m venv .venv
+. .venv/bin/activate
+
+python -m pip install -U pip
+python -m pip install -e ".[tui]"
+
+agmh --help
+agmh run --help
+```
+
+Windows PowerShell:
+
+```powershell
+git clone https://github.com/haltman-io/agmh.git
+Set-Location agmh
+
+py -3 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+
+python -m pip install -U pip
+python -m pip install -e ".[tui]"
+
+agmh --help
+agmh run --help
+```
+
+If PowerShell blocks the activation script, allow it for the current terminal
+only and activate again:
+
+```powershell
+Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
+.\.venv\Scripts\Activate.ps1
+```
+
+You can also run AGMH without activating the environment:
+
+```bash
+.venv/bin/python -m pip install -U pip
+.venv/bin/python -m pip install -e ".[tui]"
+.venv/bin/agmh --help
+```
+
+On Windows PowerShell, the same no-activation flow is:
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -U pip
+.\.venv\Scripts\python.exe -m pip install -e ".[tui]"
+.\.venv\Scripts\agmh.exe --help
+```
+
+When opening a new terminal, activate the environment again before running
+`agmh`. Leave it with:
+
+```bash
+deactivate
+```
+
 Check it:
 
 ```bash
@@ -333,10 +401,11 @@ Detailed usage examples live in [`examples/`](examples/). Each example starts
 from a clean install where `agmh` works but no tokens, webhooks, destinations,
 or config files exist yet.
 
-The names, users, people, groups, organizations, teams, and workspaces used in
-the examples are fictional and random placeholders. They do not assert, imply,
-or claim that any of those users, people, groups, organizations, teams, or
-workspaces are related to each other, to AGMH, or to Haltman.IO in any way.
+Except where an example explicitly describes a real test target, the names,
+users, people, groups, organizations, teams, and workspaces used in the examples
+are fictional and random placeholders. They do not assert, imply, or claim that
+any of those users, people, groups, organizations, teams, or workspaces are
+related to each other, to AGMH, or to Haltman.IO in any way.
 
 | Example | Description |
 | --- | --- |
@@ -361,6 +430,7 @@ workspaces are related to each other, to AGMH, or to Haltman.IO in any way.
 | [Discord thread notifications](examples/19-discord-thread-notifications.md) | Send AGMH notifications to a specific Discord thread. |
 | [Dry run and state audit](examples/20-dry-run-and-state-audit.md) | Validate mirror plans with `--dry-run` and inspect AGMH state. |
 | [Mirror to a generic Git VPS destination](examples/21-generic-git-vps-destination.md) | Push mirrors to existing bare Git repositories over SSH. |
+| [Mirror GitHub user to custom Forgejo](examples/22-extencil-github-to-irchaos-forgejo-mirror.md) | Mirror `extencil` from GitHub to the IRChaos Forgejo instance. |
 | [Shared token and webhook reference](examples/shared-token-and-webhook-reference.md) | Common credential setup notes used by the examples. |
 
 ## Quick Config Example
