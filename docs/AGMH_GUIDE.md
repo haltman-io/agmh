@@ -1184,7 +1184,7 @@ Limitations:
 
 ## Proxy, TLS, and Networking
 
-Proxy:
+HTTP/HTTPS proxy:
 
 ```bash
 agmh run \
@@ -1197,6 +1197,55 @@ TOML configuration:
 
 ```toml
 proxy = "http://127.0.0.1:8080"
+```
+
+Tor through proxychains on Ubuntu:
+
+AGMH's native `--proxy` option is for HTTP/HTTPS proxies. Tor exposes a SOCKS
+proxy, so the most compatible way to route AGMH through Tor is to run AGMH
+through `proxychains`.
+
+Install Tor and proxychains:
+
+```bash
+sudo apt update
+sudo apt install -y tor proxychains4
+sudo systemctl enable --now tor
+```
+
+Tor normally listens on the local SOCKS port `127.0.0.1:9050`. If you need to
+set it explicitly, add or keep this line in `/etc/tor/torrc`, then restart Tor:
+
+```text
+SocksPort 127.0.0.1:9050
+```
+
+```bash
+sudo systemctl restart tor
+```
+
+Configure proxychains in `/etc/proxychains4.conf`:
+
+```text
+dynamic_chain
+proxy_dns
+
+[ProxyList]
+socks5 127.0.0.1 9050
+```
+
+Run AGMH through Tor:
+
+```bash
+proxychains4 agmh run --config agmh.config.toml
+proxychains4 -q agmh run --config agmh.config.toml --verbose
+```
+
+On systems where the binary is named `proxychains`, use:
+
+```bash
+proxychains agmh run --config agmh.config.toml
+proxychains -q agmh run --config agmh.config.toml --verbose
 ```
 
 Disable TLS verification:
