@@ -333,6 +333,11 @@ Detailed usage examples live in [`examples/`](examples/). Each example starts
 from a clean install where `agmh` works but no tokens, webhooks, destinations,
 or config files exist yet.
 
+The names, users, people, groups, organizations, teams, and workspaces used in
+the examples are fictional and random placeholders. They do not assert, imply,
+or claim that any of those users, people, groups, organizations, teams, or
+workspaces are related to each other, to AGMH, or to Haltman.IO in any way.
+
 | Example | Description |
 | --- | --- |
 | [Visitor discover GitHub organization](examples/01-visitor-discover-github-hackerschoice.md) | Discover public repositories from `hackerschoice` without authentication. |
