@@ -430,7 +430,7 @@ related to each other, to AGMH, or to Haltman.IO in any way.
 | [Discord thread notifications](examples/19-discord-thread-notifications.md) | Send AGMH notifications to a specific Discord thread. |
 | [Dry run and state audit](examples/20-dry-run-and-state-audit.md) | Validate mirror plans with `--dry-run` and inspect AGMH state. |
 | [Mirror to a generic Git VPS destination](examples/21-generic-git-vps-destination.md) | Push mirrors to existing bare Git repositories over SSH. |
-| [Mirror GitHub user to custom Forgejo](examples/22-extencil-github-to-irchaos-forgejo-mirror.md) | Mirror `extencil` from GitHub to the IRChaos Forgejo instance. |
+| [Mirror GitHub user to custom Forgejo](examples/22-extencil-github-to-irchaos-forgejo-mirror.md) | Mirror `extencil` from GitHub to the IRChaosClub Forgejo instance. |
 | [Shared token and webhook reference](examples/shared-token-and-webhook-reference.md) | Common credential setup notes used by the examples. |
 
 ## Quick Config Example
