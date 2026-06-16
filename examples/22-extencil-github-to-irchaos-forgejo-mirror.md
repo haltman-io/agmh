@@ -5,9 +5,9 @@
 The GitHub user `extencil` wants to mirror the `extencil` GitHub profile to the
 custom Forgejo instance at `git.irchaos.club`.
 
-IRChaosClub is a trusted DFIR-focused community, and `extencil` has been invited to
-test the instance by mirroring the GitHub profile into the `extencil` namespace
-there.
+IRChaosClub is a trusted DFIR-focused community, and `extencil` has been
+invited to test the instance by mirroring the GitHub profile into the `extencil`
+namespace there.
 
 ## Starting Point
 
