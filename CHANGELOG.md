@@ -5,6 +5,14 @@ All notable project changes should be documented in this file.
 This project uses human-readable release notes grouped by version. Dates use
 `YYYY-MM-DD`.
 
+## [0.4.3](https://github.com/haltman-io/agmh/compare/v0.4.2...v0.4.3) (2026-06-16)
+
+
+### Documentation
+
+* improve formatting in the mirror example for clarity ([f75e545](https://github.com/haltman-io/agmh/commit/f75e5458d313d1c7a3cb5bfcefa864f3c53042b8))
+* update example references to reflect the correct Forgejo instance name ([e84d0a2](https://github.com/haltman-io/agmh/commit/e84d0a25d3f6463903bcb74c617e3cba34bd97f6))
+
 ## [0.4.2](https://github.com/haltman-io/agmh/compare/v0.4.1...v0.4.2) (2026-06-16)
 
 
